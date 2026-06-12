@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -10,555 +11,495 @@
     <script src="js/vue.min.js"></script>
     <script src="js/setting.js"></script>
 </head>
+
 <body>
 
-<div id="app" class="container">
-    <div class="col2">
-
-        <div class="switch-stacked">
-            <div class="switch" title="Hiển thị các nút cài đặt mẫu (preset) trên màn hình.">
-                <span>Hiển thị cài đặt mẫu</span>
-                <input type="checkbox" v-model="settings.hien_thi_cai_dat_mau"
-                       @change="saveSetting('hien_thi_cai_dat_mau')" id="hien_thi_cai_dat_mau">
-                <label class="switch-label" for="hien_thi_cai_dat_mau"></label>
-            </div>
-            <div class="switch" title="Hiển thị các nút thông số trên màn hình.">
-                <span>Hiển thị thông số</span>
-                <input type="checkbox" v-model="settings.hien_thi_thong_so"
-                       @change="saveSetting('hien_thi_thong_so')" id="hien_thi_thong_so">
-                <label class="switch-label" for="hien_thi_thong_so"></label>
-            </div>
-            <div class="switch" title="Hiển thị các nút chế độ trên màn hình.">
-                <span>Hiển thị chế độ</span>
-                <input type="checkbox" v-model="settings.hien_thi_che_do"
-                       @change="saveSetting('hien_thi_che_do')" id="hien_thi_che_do">
-                <label class="switch-label" for="hien_thi_che_do"></label>
-            </div>
-            <div class="switch" title="Dùng chữ đậm cho các nút trên màn hình.">
-                <span>Chữ đậm</span>
-                <input type="checkbox" v-model="settings.chu_dam" @change="saveSetting('chu_dam')"
-                       id="chu_dam">
-                <label class="switch-label" for="chu_dam"></label>
-            </div>
-            <div class="switch" title="Kiểu chữ của các nút trên màn hình.">
-                <span>Kiểu chữ</span>
-                <div class="select-group">
-                    <select v-model="settings.kieu_chu" @change="saveSetting('kieu_chu')">
-                        <option v-for="f in fontList" :value="f">{{ f }}</option>
-                    </select>
+    <div id="app" class="container">
+        <div class="col2">
+            <div class="switch-stacked">
+                <div class="switch" title="Hiển thị các nút cài đặt mẫu (preset) trên màn hình.">
+                    <span>Hiển thị cài đặt mẫu</span>
+                    <input type="checkbox" v-model="settings.hien_thi_cai_dat_mau"
+                        @change="saveSetting('hien_thi_cai_dat_mau')" id="hien_thi_cai_dat_mau">
+                    <label class="switch-label" for="hien_thi_cai_dat_mau"></label>
                 </div>
-            </div>
-            <div class="switch" title="Cỡ chữ của các nút cài đặt mẫu.">
-                <span>Cỡ chữ</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('co_chu_cai_dat_mau')"
+                <div class="switch" title="Hiển thị các nút thông số trên màn hình.">
+                    <span>Hiển thị thông số</span>
+                    <input type="checkbox" v-model="settings.hien_thi_thong_so"
+                        @change="saveSetting('hien_thi_thong_so')" id="hien_thi_thong_so">
+                    <label class="switch-label" for="hien_thi_thong_so"></label>
+                </div>
+                <div class="switch" title="Hiển thị các nút chế độ trên màn hình.">
+                    <span>Hiển thị chế độ</span>
+                    <input type="checkbox" v-model="settings.hien_thi_che_do" @change="saveSetting('hien_thi_che_do')"
+                        id="hien_thi_che_do">
+                    <label class="switch-label" for="hien_thi_che_do"></label>
+                </div>
+                <div class="switch" title="Dùng chữ đậm cho các nút trên màn hình.">
+                    <span>Chữ đậm</span>
+                    <input type="checkbox" v-model="settings.chu_dam" @change="saveSetting('chu_dam')" id="chu_dam">
+                    <label class="switch-label" for="chu_dam"></label>
+                </div>
+                <div class="switch" title="Kiểu chữ của các nút trên màn hình.">
+                    <span>Kiểu chữ</span>
+                    <div class="select-group">
+                        <select v-model="settings.kieu_chu" @change="saveSetting('kieu_chu')">
+                            <option v-for="f in fontList" :value="f">{{ f }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="switch" title="Cỡ chữ của các nút cài đặt mẫu.">
+                    <span>Cỡ chữ</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('co_chu_cai_dat_mau')"
                             :disabled="settings.co_chu_cai_dat_mau <= 5">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.co_chu_cai_dat_mau"
-                           @change="saveSetting('co_chu_cai_dat_mau')"
-                           @blur="validateInt('co_chu_cai_dat_mau')"
-                           @keyup.enter="validateInt('co_chu_cai_dat_mau')"
-                           min="5" max="64" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('co_chu_cai_dat_mau')"
+                        </button>
+                        <input type="number" v-model.number="settings.co_chu_cai_dat_mau"
+                            @change="saveSetting('co_chu_cai_dat_mau')" @blur="validateInt('co_chu_cai_dat_mau')"
+                            @keyup.enter="validateInt('co_chu_cai_dat_mau')" min="5" max="64" step="1">
+                        <button class="spinner-btn" @click="incrementInt('co_chu_cai_dat_mau')"
                             :disabled="settings.co_chu_cai_dat_mau >= 64">+
-                    </button>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="switch" title="Độ đậm của nền các nút trên màn hình, giá trị từ 0-100.">
-                <span>Độ đậm</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('do_dam')"
-                            :disabled="settings.do_dam <= 0">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.do_dam"
-                           @change="saveSetting('do_dam')"
-                           @blur="validateDoDam"
-                           @keyup.enter="validateDoDam"
-                           min="0" max="100" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('do_dam')"
-                            :disabled="settings.do_dam >= 100">+
-                    </button>
+                <div class="switch" title="Độ đậm của nền các nút trên màn hình, giá trị từ 0-100.">
+                    <span>Độ đậm</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('do_dam')" :disabled="settings.do_dam <= 0">−
+                        </button>
+                        <input type="number" v-model.number="settings.do_dam" @change="saveSetting('do_dam')"
+                            @blur="validateDoDam" @keyup.enter="validateDoDam" min="0" max="100" step="1">
+                        <button class="spinner-btn" @click="incrementInt('do_dam')" :disabled="settings.do_dam >= 100">+
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="switch" title="Khoảng cách theo chiều dọc giữa các nút cài đặt mẫu.">
-                <span>Khoảng cách</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('khoang_cach')"
+                <div class="switch" title="Khoảng cách theo chiều dọc giữa các nút cài đặt mẫu.">
+                    <span>Khoảng cách</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('khoang_cach')"
                             :disabled="settings.khoang_cach <= 0">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.khoang_cach"
-                           @change="saveSetting('khoang_cach')"
-                           @blur="validateKhoangCach"
-                           @keyup.enter="validateKhoangCach"
-                           min="0" max="20" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('khoang_cach')"
+                        </button>
+                        <input type="number" v-model.number="settings.khoang_cach" @change="saveSetting('khoang_cach')"
+                            @blur="validateKhoangCach" @keyup.enter="validateKhoangCach" min="0" max="20" step="1">
+                        <button class="spinner-btn" @click="incrementInt('khoang_cach')"
                             :disabled="settings.khoang_cach >= 20">+
-                    </button>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <p class="switch-stacked-hint">Tùy chỉnh hiển thị các nút cài đặt mẫu, chế độ và thông số trên màn hình làm việc của SketchUp.</p>
+            <p class="switch-stacked-hint">Tùy chỉnh hiển thị các nút cài đặt mẫu, chế độ và thông số trên màn hình làm
+                việc của SketchUp.</p>
 
-        <div class="switch-stacked">
-            <div class="switch" title="Độ dày của nét vẽ trong hình xem trước.">
-                <span>Độ đậm nét</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('do_dam_net_xem_truoc')"
+            <div class="switch-stacked">
+                <div class="switch" title="Độ dày của nét vẽ trong hình xem trước.">
+                    <span>Độ đậm nét</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('do_dam_net_xem_truoc')"
                             :disabled="settings.do_dam_net_xem_truoc <= 1">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.do_dam_net_xem_truoc"
-                           @change="saveSetting('do_dam_net_xem_truoc')"
-                           @blur="validateInt('do_dam_net_xem_truoc')"
-                           @keyup.enter="validateInt('do_dam_net_xem_truoc')"
-                           min="1" max="64" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('do_dam_net_xem_truoc')"
+                        </button>
+                        <input type="number" v-model.number="settings.do_dam_net_xem_truoc"
+                            @change="saveSetting('do_dam_net_xem_truoc')" @blur="validateInt('do_dam_net_xem_truoc')"
+                            @keyup.enter="validateInt('do_dam_net_xem_truoc')" min="1" max="64" step="1">
+                        <button class="spinner-btn" @click="incrementInt('do_dam_net_xem_truoc')"
                             :disabled="settings.do_dam_net_xem_truoc >= 64">+
-                    </button>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="switch" title="Độ đậm của mặt trong hình xem trước, giá trị từ 0-100.">
-                <span>Độ đậm mặt</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('do_dam_mat_xem_truoc')"
+                <div class="switch" title="Độ đậm của mặt trong hình xem trước, giá trị từ 0-100.">
+                    <span>Độ đậm mặt</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('do_dam_mat_xem_truoc')"
                             :disabled="settings.do_dam_mat_xem_truoc <= 0">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.do_dam_mat_xem_truoc"
-                           @change="saveSetting('do_dam_mat_xem_truoc')"
-                           @blur="validateDoDamMat"
-                           @keyup.enter="validateDoDamMat"
-                           min="0" max="100" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('do_dam_mat_xem_truoc')"
+                        </button>
+                        <input type="number" v-model.number="settings.do_dam_mat_xem_truoc"
+                            @change="saveSetting('do_dam_mat_xem_truoc')" @blur="validateDoDamMat"
+                            @keyup.enter="validateDoDamMat" min="0" max="100" step="1">
+                        <button class="spinner-btn" @click="incrementInt('do_dam_mat_xem_truoc')"
                             :disabled="settings.do_dam_mat_xem_truoc >= 100">+
-                    </button>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="switch" title="Cỡ chữ kích thước và ghi chú trong hình xem trước.">
-                <span>Cỡ chữ</span>
-                <div class="number-input-group">
-                    <button class="spinner-btn"
-                            @click="decrementInt('co_chu_ghi_chu')"
+                <div class="switch" title="Cỡ chữ kích thước và ghi chú trong hình xem trước.">
+                    <span>Cỡ chữ</span>
+                    <div class="number-input-group">
+                        <button class="spinner-btn" @click="decrementInt('co_chu_ghi_chu')"
                             :disabled="settings.co_chu_ghi_chu <= 5">−
-                    </button>
-                    <input type="number"
-                           v-model.number="settings.co_chu_ghi_chu"
-                           @change="saveSetting('co_chu_ghi_chu')"
-                           @blur="validateInt('co_chu_ghi_chu')"
-                           @keyup.enter="validateInt('co_chu_ghi_chu')"
-                           min="5" max="36" step="1">
-                    <button class="spinner-btn"
-                            @click="incrementInt('co_chu_ghi_chu')"
+                        </button>
+                        <input type="number" v-model.number="settings.co_chu_ghi_chu"
+                            @change="saveSetting('co_chu_ghi_chu')" @blur="validateInt('co_chu_ghi_chu')"
+                            @keyup.enter="validateInt('co_chu_ghi_chu')" min="5" max="36" step="1">
+                        <button class="spinner-btn" @click="incrementInt('co_chu_ghi_chu')"
                             :disabled="settings.co_chu_ghi_chu >= 36">+
-                    </button>
+                        </button>
+                    </div>
+                </div>
+                <div class="switch" title="Màu của kích thước và ghi chú trong hình xem trước.">
+                    <span>Màu chữ</span>
+                    <div class="color-input-group">
+                        <input type="color" v-model="mau_chu_ghi_chu_hex" @input="saveColor('mau_chu_ghi_chu')">
+                    </div>
+                </div>
+                <div class="switch" title="Màu của nét vẽ trong hình xem trước.">
+                    <span>Màu nét</span>
+                    <div class="color-input-group">
+                        <input type="color" v-model="mau_net_xem_truoc_hex" @input="saveColor('mau_net_xem_truoc')">
+                    </div>
+                </div>
+                <div class="switch" title="Màu của mặt trong hình xem trước.">
+                    <span>Màu mặt</span>
+                    <div class="color-input-group">
+                        <input type="color" v-model="mau_mat_xem_truoc_hex" @input="saveColor('mau_mat_xem_truoc')">
+                    </div>
+                </div>
+                <div class="switch" title="Màu cảnh báo khi xóa liên kết, mộng gỗ, bản lề.">
+                    <span>Màu cảnh báo</span>
+                    <div class="color-input-group">
+                        <input type="color" v-model="mau_canh_bao_hex" @input="saveColor('mau_canh_bao')">
+                    </div>
                 </div>
             </div>
-            <div class="switch" title="Màu của kích thước và ghi chú trong hình xem trước.">
-                <span>Màu chữ</span>
-                <div class="color-input-group">
-                    <input type="color"
-                           v-model="mau_chu_ghi_chu_hex"
-                           @input="saveColor('mau_chu_ghi_chu')">
+            <p class="switch-stacked-hint">Tùy chỉnh hình xem trước khi sử dụng lệnh.</p>
+
+            <div class="switch-stacked">
+                <div class="switch" title="Hiện lệnh Tạo ván trên thanh công cụ.">
+                    <span>Tạo ván</span>
+                    <input type="checkbox" v-model="settings.tao_van" @change="saveSetting('tao_van')" id="tao_van">
+                    <label class="switch-label" for="tao_van"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Tạo cánh trên thanh công cụ.">
+                    <span>Tạo cánh</span>
+                    <input type="checkbox" v-model="settings.tao_canh" @change="saveSetting('tao_canh')" id="tao_canh">
+                    <label class="switch-label" for="tao_canh"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Đục khung trên thanh công cụ.">
+                    <span>Đục khung</span>
+                    <input type="checkbox" v-model="settings.duc_khung" @change="saveSetting('duc_khung')"
+                        id="duc_khung">
+                    <label class="switch-label" for="duc_khung"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Bản lề trên thanh công cụ.">
+                    <span>Bản lề</span>
+                    <input type="checkbox" v-model="settings.ban_le" @change="saveSetting('ban_le')" id="ban_le">
+                    <label class="switch-label" for="ban_le"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Độ dày trên thanh công cụ.">
+                    <span>Độ dày</span>
+                    <input type="checkbox" v-model="settings.doday" @change="saveSetting('doday')" id="doday">
+                    <label class="switch-label" for="doday"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Phục hồi trên thanh công cụ.">
+                    <span>Phục hồi</span>
+                    <input type="checkbox" v-model="settings.phuc_hoi" @change="saveSetting('phuc_hoi')" id="phuc_hoi">
+                    <label class="switch-label" for="phuc_hoi"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Bo góc trên thanh công cụ.">
+                    <span>Bo góc</span>
+                    <input type="checkbox" v-model="settings.bo_goc" @change="saveSetting('bo_goc')" id="bo_goc">
+                    <label class="switch-label" for="bo_goc"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Bào rãnh trên thanh công cụ.">
+                    <span>Bào rãnh</span>
+                    <input type="checkbox" v-model="settings.bao_ranh" @change="saveSetting('bao_ranh')" id="bao_ranh">
+                    <label class="switch-label" for="bao_ranh"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Uốn cong trên thanh công cụ.">
+                    <span>Uốn cong</span>
+                    <input type="checkbox" v-model="settings.tao_uon_cong" @change="saveSetting('tao_uon_cong')"
+                        id="tao_uon_cong">
+                    <label class="switch-label" for="tao_uon_cong"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Mộng gỗ trên thanh công cụ.">
+                    <span>Mộng gỗ</span>
+                    <input type="checkbox" v-model="settings.tao_mong_go" @change="saveSetting('tao_mong_go')"
+                        id="tao_mong_go">
+                    <label class="switch-label" for="tao_mong_go"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Liên kết trên thanh công cụ.">
+                    <span>Liên kết</span>
+                    <input type="checkbox" v-model="settings.lien_ket" @change="saveSetting('lien_ket')" id="lien_ket">
+                    <label class="switch-label" for="lien_ket"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Âm dương trên thanh công cụ.">
+                    <span>Âm dương</span>
+                    <input type="checkbox" v-model="settings.khau_am_duong" @change="saveSetting('khau_am_duong')"
+                        id="khau_am_duong">
+                    <label class="switch-label" for="khau_am_duong"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Khử dao trên thanh công cụ.">
+                    <span>Khử dao</span>
+                    <input type="checkbox" v-model="settings.khu_dao" @change="saveSetting('khu_dao')" id="khu_dao">
+                    <label class="switch-label" for="khu_dao"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Khấu ván trên thanh công cụ.">
+                    <span>Khấu ván</span>
+                    <input type="checkbox" v-model="settings.khau_van" @change="saveSetting('khau_van')" id="khau_van">
+                    <label class="switch-label" for="khau_van"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Nối ván trên thanh công cụ.">
+                    <span>Nối ván</span>
+                    <input type="checkbox" v-model="settings.noi_van" @change="saveSetting('noi_van')" id="noi_van">
+                    <label class="switch-label" for="noi_van"></label>
+                </div>
+                <div class="switch" title="Hiện lệnh Cài đặt trên thanh công cụ.">
+                    <span>Cài đặt</span>
+                    <input type="checkbox" v-model="settings.cai_dat" @change="saveSetting('cai_dat')" id="cai_dat">
+                    <label class="switch-label" for="cai_dat"></label>
                 </div>
             </div>
-            <div class="switch" title="Màu của nét vẽ trong hình xem trước.">
-                <span>Màu nét</span>
-                <div class="color-input-group">
-                    <input type="color"
-                           v-model="mau_net_xem_truoc_hex"
-                           @input="saveColor('mau_net_xem_truoc')">
+            <p class="switch-stacked-hint">Kích hoạt hoặc vô hiệu hóa các lệnh trên thanh công cụ. Thay đổi có hiệu lực
+                sau khi khởi động lại SketchUp.</p>
+
+            <div class="switch-stacked">
+                <div class="switch" title="Bật chế độ nhà phát triển.">
+                    <span>Chế độ nhà phát triển</span>
+                    <input type="checkbox" v-model="settings.che_do_nha_phat_trien" @change="onDevModeChange"
+                        id="che_do_nha_phat_trien">
+                    <label class="switch-label" for="che_do_nha_phat_trien"></label>
+                </div>
+                <div class="switch" v-show="settings.che_do_nha_phat_trien"
+                    title="Chuyển đổi giữa giao diện sáng và tối.">
+                    <span>Giao diện cài đặt tối</span>
+                    <input type="checkbox" v-model="settings.giao_dien_cai_dat_toi" @change="toggleDarkMode"
+                        id="giao_dien_cai_dat_toi">
+                    <label class="switch-label" for="giao_dien_cai_dat_toi"></label>
+                </div>
+                <div class="switch" v-show="settings.che_do_nha_phat_trien"
+                    title="Sử dụng biểu tượng từ thư mục tùy chỉnh.">
+                    <span>Biểu tượng tùy chỉnh</span>
+                    <input type="checkbox" v-model="settings.bieu_tuong_tuy_chinh" @change="onCustomIconChange"
+                        id="bieu_tuong_tuy_chinh">
+                    <label class="switch-label" for="bieu_tuong_tuy_chinh"></label>
+                </div>
+                <div class="switch" v-show="settings.che_do_nha_phat_trien && settings.bieu_tuong_tuy_chinh"
+                    title="Nhấn để chọn thư mục chứa biểu tượng.">
+                    <span>Thư mục biểu tượng</span>
+                    <div class="text-input-group">
+                        <input type="text" :value="folderName(settings.thu_muc_bieu_tuong)" readonly
+                            style="cursor: pointer;" @click="selectIconFolder">
+                    </div>
                 </div>
             </div>
-            <div class="switch" title="Màu của mặt trong hình xem trước.">
-                <span>Màu mặt</span>
-                <div class="color-input-group">
-                    <input type="color"
-                           v-model="mau_mat_xem_truoc_hex"
-                           @input="saveColor('mau_mat_xem_truoc')">
-                </div>
-            </div>
-            <div class="switch" title="Màu cảnh báo khi xóa liên kết, mộng gỗ, bản lề.">
-                <span>Màu cảnh báo</span>
-                <div class="color-input-group">
-                    <input type="color"
-                           v-model="mau_canh_bao_hex"
-                           @input="saveColor('mau_canh_bao')">
-                </div>
-            </div>
+            <p class="switch-stacked-hint">Tạo các bản ghi theo dõi khi sử dụng công cụ. Chỉ dành để gỡ lỗi hoặc chạy
+                các tính năng thử nghiệm.</p>
         </div>
-        <p class="switch-stacked-hint">Tùy chỉnh hình xem trước khi sử dụng lệnh.</p>
-
-        <div class="switch-stacked">
-            <div class="switch" title="Hiện lệnh Tạo ván trên thanh công cụ.">
-                <span>Tạo ván</span>
-                <input type="checkbox" v-model="settings.tao_van"
-                       @change="saveSetting('tao_van')" id="tao_van">
-                <label class="switch-label" for="tao_van"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Tạo cánh trên thanh công cụ.">
-                <span>Tạo cánh</span>
-                <input type="checkbox" v-model="settings.tao_canh"
-                       @change="saveSetting('tao_canh')" id="tao_canh">
-                <label class="switch-label" for="tao_canh"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Đục khung trên thanh công cụ.">
-                <span>Đục khung</span>
-                <input type="checkbox" v-model="settings.duc_khung"
-                       @change="saveSetting('duc_khung')" id="duc_khung">
-                <label class="switch-label" for="duc_khung"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Bản lề trên thanh công cụ.">
-                <span>Bản lề</span>
-                <input type="checkbox" v-model="settings.ban_le"
-                       @change="saveSetting('ban_le')" id="ban_le">
-                <label class="switch-label" for="ban_le"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Độ dày trên thanh công cụ.">
-                <span>Độ dày</span>
-                <input type="checkbox" v-model="settings.doday"
-                       @change="saveSetting('doday')" id="doday">
-                <label class="switch-label" for="doday"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Phục hồi trên thanh công cụ.">
-                <span>Phục hồi</span>
-                <input type="checkbox" v-model="settings.phuc_hoi"
-                       @change="saveSetting('phuc_hoi')" id="phuc_hoi">
-                <label class="switch-label" for="phuc_hoi"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Bo góc trên thanh công cụ.">
-                <span>Bo góc</span>
-                <input type="checkbox" v-model="settings.bo_goc"
-                       @change="saveSetting('bo_goc')" id="bo_goc">
-                <label class="switch-label" for="bo_goc"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Bào rãnh trên thanh công cụ.">
-                <span>Bào rãnh</span>
-                <input type="checkbox" v-model="settings.bao_ranh"
-                       @change="saveSetting('bao_ranh')" id="bao_ranh">
-                <label class="switch-label" for="bao_ranh"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Uốn cong trên thanh công cụ.">
-                <span>Uốn cong</span>
-                <input type="checkbox" v-model="settings.tao_uon_cong"
-                       @change="saveSetting('tao_uon_cong')" id="tao_uon_cong">
-                <label class="switch-label" for="tao_uon_cong"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Mộng gỗ trên thanh công cụ.">
-                <span>Mộng gỗ</span>
-                <input type="checkbox" v-model="settings.tao_mong_go"
-                       @change="saveSetting('tao_mong_go')" id="tao_mong_go">
-                <label class="switch-label" for="tao_mong_go"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Liên kết trên thanh công cụ.">
-                <span>Liên kết</span>
-                <input type="checkbox" v-model="settings.lien_ket"
-                       @change="saveSetting('lien_ket')" id="lien_ket">
-                <label class="switch-label" for="lien_ket"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Âm dương trên thanh công cụ.">
-                <span>Âm dương</span>
-                <input type="checkbox" v-model="settings.khau_am_duong"
-                       @change="saveSetting('khau_am_duong')" id="khau_am_duong">
-                <label class="switch-label" for="khau_am_duong"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Khử dao trên thanh công cụ.">
-                <span>Khử dao</span>
-                <input type="checkbox" v-model="settings.khu_dao"
-                       @change="saveSetting('khu_dao')" id="khu_dao">
-                <label class="switch-label" for="khu_dao"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Khấu ván trên thanh công cụ.">
-                <span>Khấu ván</span>
-                <input type="checkbox" v-model="settings.khau_van"
-                       @change="saveSetting('khau_van')" id="khau_van">
-                <label class="switch-label" for="khau_van"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Nối ván trên thanh công cụ.">
-                <span>Nối ván</span>
-                <input type="checkbox" v-model="settings.noi_van"
-                       @change="saveSetting('noi_van')" id="noi_van">
-                <label class="switch-label" for="noi_van"></label>
-            </div>
-            <div class="switch" title="Hiện lệnh Cài đặt trên thanh công cụ.">
-                <span>Cài đặt</span>
-                <input type="checkbox" v-model="settings.cai_dat"
-                       @change="saveSetting('cai_dat')" id="cai_dat">
-                <label class="switch-label" for="cai_dat"></label>
-            </div>
-        </div>
-        <p class="switch-stacked-hint">Kích hoạt hoặc vô hiệu hóa các lệnh trên thanh công cụ. Thay đổi có hiệu lực sau khi khởi động lại SketchUp.</p>
-
-        <div class="switch-stacked">
-            <div class="switch" title="Bật chế độ nhà phát triển.">
-                <span>Chế độ nhà phát triển</span>
-                <input type="checkbox" v-model="settings.che_do_nha_phat_trien"
-                       @change="onDevModeChange" id="che_do_nha_phat_trien">
-                <label class="switch-label" for="che_do_nha_phat_trien"></label>
-            </div>
-            <div class="switch" v-show="settings.che_do_nha_phat_trien" title="Chuyển đổi giữa giao diện sáng và tối.">
-                <span>Giao diện cài đặt tối</span>
-                <input type="checkbox" v-model="settings.giao_dien_cai_dat_toi"
-                       @change="toggleDarkMode" id="giao_dien_cai_dat_toi">
-                <label class="switch-label" for="giao_dien_cai_dat_toi"></label>
-            </div>
-            <div class="switch" v-show="settings.che_do_nha_phat_trien" title="Sử dụng biểu tượng từ thư mục tùy chỉnh.">
-                <span>Biểu tượng tùy chỉnh</span>
-                <input type="checkbox" v-model="settings.bieu_tuong_tuy_chinh"
-                       @change="onCustomIconChange" id="bieu_tuong_tuy_chinh">
-                <label class="switch-label" for="bieu_tuong_tuy_chinh"></label>
-            </div>
-            <div class="switch" v-show="settings.che_do_nha_phat_trien && settings.bieu_tuong_tuy_chinh" title="Nhấn để chọn thư mục chứa biểu tượng.">
-                <span>Thư mục biểu tượng</span>
-                <div class="text-input-group">
-                    <input type="text" :value="folderName(settings.thu_muc_bieu_tuong)" readonly
-                           style="cursor: pointer;" @click="selectIconFolder">
-                </div>
-            </div>
-        </div>
-        <p class="switch-stacked-hint">Tạo các bản ghi theo dõi khi sử dụng công cụ. Chỉ dành để gỡ lỗi hoặc chạy các tính năng thử nghiệm.</p>
-
-</div>
-
-    <div class="col3">
-        <div class="col3-group">
-            <button class="col3-btn secondary full"
+        <div class="col3">
+            <div class="col3-group">
+                <button class="col3-btn secondary full"
                     title="Lưu toàn bộ cấu hình thông số hiện tại ra file máy tính cá nhân."
                     @click="postAction('export_settings')">
-                💾 Xuất bản sao lưu
-            </button>
-            <button class="col3-btn secondary full"
-                    title="Nhập lại cấu hình từ file dữ liệu có sẵn trên máy tính."
+                    💾 Xuất bản sao lưu
+                </button>
+                <button class="col3-btn secondary full" title="Nhập lại cấu hình từ file dữ liệu có sẵn trên máy tính."
                     @click="postAction('import_settings')">
-                📂 Nhập file sao lưu
-            </button>
-            <button class="col3-btn secondary full" style="opacity: 0.5; cursor: not-allowed;"
-                    title="Tính năng lưu trữ đám mây đã tắt trong phiên bản Open Source. Hãy dùng chức năng Xuất bản sao lưu." disabled>
-                ☁️ Tải lên Cloud (Tắt)
-            </button>
-            <button class="col3-btn secondary full" style="opacity: 0.5; cursor: not-allowed;"
-                    title="Tính năng đồng bộ đám mây đã tắt trong phiên bản Open Source. Hãy dùng chức năng Nhập file sao lưu." disabled>
-                ☁️ Đồng bộ Cloud (Tắt)
-            </button>
-            <button class="col3-btn danger full"
+                    📂 Nhập file sao lưu
+                </button>
+                <button class="col3-btn secondary full" style="opacity: 0.5; cursor: not-allowed;"
+                    title="Tính năng lưu trữ đám mây đã tắt trong phiên bản Open Source. Hãy dùng chức năng Xuất bản sao lưu."
+                    disabled>
+                    ☁️ Tải lên Cloud (Tắt)
+                </button>
+                <button class="col3-btn secondary full" style="opacity: 0.5; cursor: not-allowed;"
+                    title="Tính năng đồng bộ đám mây đã tắt trong phiên bản Open Source. Hãy dùng chức năng Nhập file sao lưu."
+                    disabled>
+                    ☁️ Đồng bộ Cloud (Tắt)
+                </button>
+                <button class="col3-btn danger full"
                     title="Khôi phục tất cả cài đặt hệ thống về trạng thái mặc định ban đầu."
                     @click="postAction('reset_settings')">
-                Đặt lại cài đặt gốc
-            </button>
-        <div class="col3-group">
-            <button class="col3-btn primary full"
-                    title="Kiểm tra phiên bản mới trên GitHub."
+                    Đặt lại cài đặt gốc
+                </button>
+            </div>
+            <div class="col3-group">
+                <button class="col3-btn primary full" title="Kiểm tra phiên bản mới trên GitHub."
                     @click="postAction('check_update')">
-                🚀 Cập nhật phiên bản
-            </button>
-        </div>
+                    🚀 Cập nhật phiên bản
+                </button>
+            </div>
 
-        <div class="col3-group">
-            <button class="col3-btn danger full"
+            <div class="col3-group">
+                <button class="col3-btn danger full"
                     title="Gỡ bỏ hoàn toàn cấu hình nạp liên kết OpenZSU khỏi SketchUp."
                     @click="postAction('uninstall')">
-                🗑️ Gỡ phần mềm ZSU
-            </button>
+                    🗑️ Gỡ phần mềm ZSU
+                </button>
+            </div>
+
+            <div style="flex:1"></div>
+
+            <div class="col3-links-footer">
+                <a href="https://github.com/chill4share/openzsu" target="_blank" class="col3-btn secondary full"
+                    style="font-weight: bold; color: #2196F3;">
+                    🐙 GitHub Project
+                </a>
+                <a href="https://github.com/chill4share/openzsu/issues" target="_blank" class="col3-btn secondary full">
+                    🐛 Báo Lỗi / Góp Ý
+                </a>
+                <a href="https://github.com/chill4share/openzsu/blob/main/README.md" target="_blank"
+                    class="col3-btn secondary full">
+                    📖 Hướng Dẫn Cài Đặt
+                </a>
+            </div>
         </div>
 
-        <div style="flex:1"></div>
-
-        <div class="col3-links-footer">
-            <a href="https://github.com/chill4share/openzsu" target="_blank" class="col3-btn secondary full" style="font-weight: bold; color: #2196F3;">
-                🐙 GitHub Project
-            </a>
-            <a href="https://github.com/chill4share/openzsu/issues" target="_blank" class="col3-btn secondary full">
-                🐛 Báo Lỗi / Góp Ý
-            </a>
-            <a href="https://github.com/chill4share/openzsu/blob/main/README.md" target="_blank" class="col3-btn secondary full">
-                📖 Hướng Dẫn Cài Đặt
-            </a>
-        </div>
     </div>
-</div>
-
-<script>
-    new Vue({
-        el: '#app',
-        mixins: [SettingsMixin('cai_dat')],
-        data: {
-            settings: {
-                hien_thi_cai_dat_mau: true,
-                hien_thi_thong_so: true,
-                hien_thi_che_do: true,
-                kieu_chu: 'Arial',
-                chu_dam: false,
-                co_chu_cai_dat_mau: 8,
-                do_dam: 25,
-                khoang_cach: 5,
-                do_dam_net_xem_truoc: 2,
-                do_dam_mat_xem_truoc: 10,
-                mau_mat_xem_truoc: [60, 175, 214],
-                mau_net_xem_truoc: [74, 68, 115],
-                co_chu_ghi_chu: 8,
-                mau_chu_ghi_chu: [74, 68, 115],
-                mau_canh_bao: [210, 117, 159],
-                tao_van: true,
-                tao_canh: true,
-                duc_khung: true,
-                ban_le: true,
-                doday: true,
-                phuc_hoi: true,
-                bo_goc: true,
-                bao_ranh: true,
-                tao_uon_cong: true,
-                tao_mong_go: true,
-                lien_ket: true,
-                khau_am_duong: true,
-                khu_dao: true,
-                khau_van: true,
-                noi_van: true,
-                cai_dat: true,
-                che_do_nha_phat_trien: false,
-                giao_dien_cai_dat_toi: false,
-                bieu_tuong_tuy_chinh: false,
-                thu_muc_bieu_tuong: '',
+    <script>
+        // Giữ nguyên phần cấu trúc Script Vue của bạn vì logic JS đã chuẩn xác.
+        new Vue({
+            el: '#app',
+            mixins: [SettingsMixin('cai_dat')],
+            data: {
+                settings: {
+                    hien_thi_cai_dat_mau: true,
+                    hien_thi_thong_so: true,
+                    hien_thi_che_do: true,
+                    kieu_chu: 'Arial',
+                    chu_dam: false,
+                    co_chu_cai_dat_mau: 8,
+                    do_dam: 25,
+                    khoang_cach: 5,
+                    do_dam_net_xem_truoc: 2,
+                    do_dam_mat_xem_truoc: 10,
+                    mau_mat_xem_truoc: [60, 175, 214],
+                    mau_net_xem_truoc: [74, 68, 115],
+                    co_chu_ghi_chu: 8,
+                    mau_chu_ghi_chu: [74, 68, 115],
+                    mau_canh_bao: [210, 117, 159],
+                    tao_van: true,
+                    tao_canh: true,
+                    duc_khung: true,
+                    ban_le: true,
+                    doday: true,
+                    phuc_hoi: true,
+                    bo_goc: true,
+                    bao_ranh: true,
+                    tao_uon_cong: true,
+                    tao_mong_go: true,
+                    lien_ket: true,
+                    khau_am_duong: true,
+                    khu_dao: true,
+                    khau_van: true,
+                    noi_van: true,
+                    cai_dat: true,
+                    che_do_nha_phat_trien: false,
+                    giao_dien_cai_dat_toi: false,
+                    bieu_tuong_tuy_chinh: false,
+                    thu_muc_bieu_tuong: '',
+                },
             },
-        },
-        computed: {
-            fontList() {
-                return ['Arial', 'Calibri', 'Candara', 'Consolas', 'Corbel', 'Tahoma', 'Verdana'];
+            computed: {
+                fontList() {
+                    return ['Arial', 'Calibri', 'Candara', 'Consolas', 'Corbel', 'Tahoma', 'Verdana'];
+                },
+                mau_mat_xem_truoc_hex: colorComputed('mau_mat_xem_truoc'),
+                mau_net_xem_truoc_hex: colorComputed('mau_net_xem_truoc'),
+                mau_chu_ghi_chu_hex: colorComputed('mau_chu_ghi_chu'),
+                mau_canh_bao_hex: colorComputed('mau_canh_bao')
             },
-            mau_mat_xem_truoc_hex: colorComputed('mau_mat_xem_truoc'),
-            mau_net_xem_truoc_hex: colorComputed('mau_net_xem_truoc'),
-            mau_chu_ghi_chu_hex: colorComputed('mau_chu_ghi_chu'),
-            mau_canh_bao_hex: colorComputed('mau_canh_bao')
-        },
-        methods: {
-            onDevModeChange() {
-                this.saveSetting('che_do_nha_phat_trien');
-                this.applyTheme();
-            },
-
-            toggleDarkMode() {
-                this.saveSetting('giao_dien_cai_dat_toi');
-                this.applyTheme();
-            },
-
-            onCustomIconChange() {
-                if (this.settings.bieu_tuong_tuy_chinh) {
-                    this.postAction('select_icon_folder');
-                } else {
-                    this.saveSetting('bieu_tuong_tuy_chinh');
-                }
-            },
-
-            selectIconFolder() {
-                this.postAction('select_icon_folder');
-            },
-
-            folderName(path) {
-                if (!path) return '';
-                var parts = path.replace(/\\/g, '/').split('/');
-                return parts[parts.length - 1] || '';
-            },
-
-            applyTheme() {
-                var theme = (this.settings.che_do_nha_phat_trien && this.settings.giao_dien_cai_dat_toi) ? 'dark' : '';
-                document.documentElement.setAttribute('data-theme', theme);
-                if (window.parent !== window) {
-                    window.parent.postMessage({ action: 'set_theme', theme: theme }, '*');
-                }
-            },
-
-            postAction(action, data) {
-                // 1. Đánh chặn để đẩy thẳng tín hiệu về cổng giao tiếp của SketchUp HtmlDialog
-                if (window.sketchup) {
-                    if (typeof window.sketchup[action] === 'function') {
-                        if (data) {
-                            window.sketchup[action](data);
-                        } else {
-                            window.sketchup[action]();
-                        }
-                    } else if (typeof window.sketchup.postAction === 'function') {
-                        // Phương thức dự phòng nếu file so hoặc core cũ yêu cầu định tuyến qua cổng tổng
-                        window.sketchup.postAction(action, data);
+            methods: {
+                onDevModeChange() {
+                    this.saveSetting('che_do_nha_phat_trien');
+                    this.applyTheme();
+                },
+                toggleDarkMode() {
+                    this.saveSetting('giao_dien_cai_dat_toi');
+                    this.applyTheme();
+                },
+                onCustomIconChange() {
+                    if (this.settings.bieu_tuong_tuy_chinh) {
+                        this.postAction('select_icon_folder');
+                    } else {
+                        this.saveSetting('bieu_tuong_tuy_chinh');
                     }
-                }
-                
-                // 2. Giữ nguyên luồng phát tin gốc để không làm hỏng cơ chế bắt sự kiện của file setting.js đi kèm
-                if (window.parent !== window) {
-                    var msg = {action: action};
-                    if (data) Object.assign(msg, data);
-                    window.parent.postMessage(msg, '*');
-                }
-            },
-
-            validateDoDam() {
-                let n = parseInt(this.settings.do_dam, 10);
-                if (isNaN(n) || n < 0) n = 0;
-                if (n > 100) n = 100;
-                this.settings.do_dam = n;
-                this.saveSetting('do_dam');
-            },
-
-            validateDoDamMat() {
-                let n = parseInt(this.settings.do_dam_mat_xem_truoc, 10);
-                if (isNaN(n) || n < 0) n = 0;
-                if (n > 100) n = 100;
-                this.settings.do_dam_mat_xem_truoc = n;
-                this.saveSetting('do_dam_mat_xem_truoc');
-            },
-
-            validateKhoangCach() {
-                let n = parseInt(this.settings.khoang_cach, 10);
-                if (isNaN(n) || n < 0) n = 0;
-                if (n > 20) n = 20;
-                this.settings.khoang_cach = n;
-                this.saveSetting('khoang_cach');
-            },
-
-            loadSettings(settings) {
-                const self = this;
-                Object.keys(settings).forEach(function (key) {
-                    if (self.settings.hasOwnProperty(key)) {
-                        let value = settings[key];
-                        if (typeof value === 'string' && !isNaN(value) && value !== '') {
-                            value = parseFloat(value);
+                },
+                selectIconFolder() {
+                    this.postAction('select_icon_folder');
+                },
+                folderName(path) {
+                    if (!path) return '';
+                    var parts = path.replace(/\\/g, '/').split('/');
+                    return parts[parts.length - 1] || '';
+                },
+                applyTheme() {
+                    var theme = (this.settings.che_do_nha_phat_trien && this.settings.giao_dien_cai_dat_toi) ? 'dark' : '';
+                    document.documentElement.setAttribute('data-theme', theme);
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ action: 'set_theme', theme: theme }, '*');
+                    }
+                },
+                postAction(action, data) {
+                    if (window.sketchup) {
+                        if (typeof window.sketchup[action] === 'function') {
+                            if (data) {
+                                window.sketchup[action](data);
+                            } else {
+                                window.sketchup[action]();
+                            }
+                        } else if (typeof window.sketchup.postAction === 'function') {
+                            window.sketchup.postAction(action, data);
                         }
-                        if (self.isColorKey(key) && typeof value === 'string') {
-                            value = value.split(',').map(v => parseInt(v.trim()));
+                    }
+                    if (window.parent !== window) {
+                        var msg = { action: action };
+                        if (data) Object.assign(msg, data);
+                        window.parent.postMessage(msg, '*');
+                    }
+                },
+                validateDoDam() {
+                    let n = parseInt(this.settings.do_dam, 10);
+                    if (isNaN(n) || n < 0) n = 0;
+                    if (n > 100) n = 100;
+                    this.settings.do_dam = n;
+                    this.saveSetting('do_dam');
+                },
+                validateDoDamMat() {
+                    let n = parseInt(this.settings.do_dam_mat_xem_truoc, 10);
+                    if (isNaN(n) || n < 0) n = 0;
+                    if (n > 100) n = 100;
+                    this.settings.do_dam_mat_xem_truoc = n;
+                    this.saveSetting('do_dam_mat_xem_truoc');
+                },
+                validateKhoangCach() {
+                    let n = parseInt(this.settings.khoang_cach, 10);
+                    if (isNaN(n) || n < 0) n = 0;
+                    if (n > 20) n = 20;
+                    this.settings.khoang_cach = n;
+                    this.saveSetting('khoang_cach');
+                },
+                loadSettings(settings) {
+                    const self = this;
+                    Object.keys(settings).forEach(function (key) {
+                        if (self.settings.hasOwnProperty(key)) {
+                            let value = settings[key];
+                            if (typeof value === 'string' && !isNaN(value) && value !== '') {
+                                value = parseFloat(value);
+                            }
+                            if (self.isColorKey(key) && typeof value === 'string') {
+                                value = value.split(',').map(v => parseInt(v.trim()));
+                            }
+                            self.settings[key] = value;
                         }
-                        self.settings[key] = value;
+                    });
+                    this.applyTheme();
+                }
+            },
+            mounted() {
+                var self = this;
+                window.addEventListener('message', function (event) {
+                    if (event.data && event.data.action === 'icon_folder_result') {
+                        if (event.data.folder) {
+                            self.settings.thu_muc_bieu_tuong = event.data.folder;
+                            self.saveSetting('bieu_tuong_tuy_chinh');
+                            self.saveSetting('thu_muc_bieu_tuong');
+                        } else {
+                            self.settings.bieu_tuong_tuy_chinh = false;
+                            self.saveSetting('bieu_tuong_tuy_chinh');
+                        }
                     }
                 });
-                this.applyTheme();
             }
-        },
-        mounted() {
-            var self = this;
-            window.addEventListener('message', function (event) {
-                if (event.data && event.data.action === 'icon_folder_result') {
-                    if (event.data.folder) {
-                        self.settings.thu_muc_bieu_tuong = event.data.folder;
-                        self.saveSetting('bieu_tuong_tuy_chinh');
-                        self.saveSetting('thu_muc_bieu_tuong');
-                    } else {
-                        self.settings.bieu_tuong_tuy_chinh = false;
-                        self.saveSetting('bieu_tuong_tuy_chinh');
-                    }
-                }
-            });
-        }
-    });
-</script>
+        });
+    </script>
 
 </body>
+
 </html>

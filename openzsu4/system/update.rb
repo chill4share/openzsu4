@@ -1,51 +1,54 @@
 require 'sketchup'
-require 'net/http'
-require 'json'
-require 'openssl'
 
 module ZSU
   module Update
     GITHUB_URL = "https://github.com/chill4share/openzsu4/releases"
 
     def self.check_version(manual = true)
-      Thread.new do
+      url = "https://raw.githubusercontent.com/chill4share/openzsu4/refs/heads/main/openzsu4.rb?t=#{Time.now.to_i}"
+      
+      request = Sketchup::Http::Request.new(url)
+      request.headers = { "User-Agent" => "SketchUp-OpenZSU-Updater" }
+      
+      request.start do |response|
         begin
-          uri = URI("https://api.github.com/repos/chill4share/openzsu4/releases/latest")
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-          
-          request = Net::HTTP::Get.new(uri)
-          request["User-Agent"] = "SketchUp-OpenZSU-Updater"
-          response = http.request(request)
+          # Trạng thái STATUS_SUCCESS trong SketchUp API là 1
+          if response.status == 1 
+            if response.code == 200
+              body = response.body
+              if body =~ /VERSION\s*=\s*["']([^"']+)["']/
+                latest_ver_str = $1
+                
+                current_ver = Gem::Version.new(ZSU::VERSION)
+                latest_ver = Gem::Version.new(latest_ver_str)
 
-          if response.is_a?(Net::HTTPSuccess)
-            data = JSON.parse(response.body)
-            latest_tag = data["tag_name"]
-            latest_ver_str = latest_tag.gsub(/^v/, "")
-            
-            current_ver = Gem::Version.new(ZSU::VERSION)
-            latest_ver = Gem::Version.new(latest_ver_str)
-
-            if latest_ver > current_ver
-              UI.start_timer(0, false) do
-                msg = "Đã có phiên bản mới: #{latest_tag} (Phiên bản hiện tại: #{ZSU::VERSION}). Bạn có muốn tải về và cập nhật tự động ngay không?"
-                if UI.messagebox(msg, MB_YESNO) == IDYES
-                  download_and_install(latest_ver_str)
+                if latest_ver > current_ver
+                  UI.start_timer(0, false) do
+                    msg = "Đã có phiên bản mới: v#{latest_ver_str} (Hiện tại: v#{ZSU::VERSION}).\n\nBạn có muốn tải về và cập nhật tự động ngay không?"
+                    if UI.messagebox(msg, MB_YESNO) == IDYES
+                      download_and_install(latest_ver_str)
+                    end
+                  end
+                elsif manual
+                  UI.start_timer(0, false) do
+                    UI.messagebox("Bạn đang sử dụng phiên bản mới nhất (v#{ZSU::VERSION}).")
+                  end
                 end
+              else
+                raise "Không tìm thấy thông tin định nghĩa VERSION trên GitHub."
               end
-            elsif manual
-              UI.start_timer(0, false) do
-                UI.messagebox("Bạn đang sử dụng phiên bản mới nhất (#{ZSU::VERSION}).")
-              end
+            else
+              # Chỉ gọi response.code khi status == 1
+              raise "Lỗi HTTP từ máy chủ: #{response.code}"
             end
-          elsif manual
-            UI.start_timer(0, false) do
-              UI.messagebox("Không thể kiểm tra phiên bản mới. Lỗi HTTP #{response.code}")
-            end
+          else
+            # Nếu status != 1 (Có thể là 0 hoặc 2), không gọi .code để tránh lỗi hệ thống
+            raise "Không thể kết nối tới GitHub (Mã trạng thái Request: #{response.status})"
           end
+          
         rescue => e
           if manual
+            # Đưa thông báo lỗi về Main Thread an toàn
             UI.start_timer(0, false) do
               UI.messagebox("Lỗi kiểm tra phiên bản: #{e.message}")
             end
@@ -55,62 +58,46 @@ module ZSU
       true
     end
 
-    def self.download_file(url, limit = 10)
-      raise "Too many HTTP redirects" if limit == 0
-
-      uri = URI(url)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == "https")
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      
-      request = Net::HTTP::Get.new(uri)
-      request["User-Agent"] = "SketchUp-OpenZSU-Updater"
-      
-      response = http.request(request)
-      case response
-      when Net::HTTPSuccess
-        temp_path = File.join(Sketchup.temp_dir, "openzsu_update_#{Time.now.to_i}.rbz")
-        File.open(temp_path, "wb") do |f|
-          f.write(response.body)
-        end
-        temp_path
-      when Net::HTTPRedirection
-        location = response['location']
-        download_file(location, limit - 1)
-      else
-        raise "Tải file thất bại: HTTP #{response.code}"
-      end
-    end
-
     def self.download_and_install(version_str)
       UI.status_text = "Đang tải bản cập nhật OpenZSU v#{version_str}..."
       
-      Thread.new do
+      filename = "OpenZsu_#{version_str}.rbz"
+      url = "https://github.com/chill4share/openzsu4/releases/download/v#{version_str}/#{filename}"
+      
+      request = Sketchup::Http::Request.new(url)
+      request.headers = { "User-Agent" => "SketchUp-OpenZSU-Updater" }
+      
+      request.start do |response|
         begin
-          ver_num = version_str.gsub('.', '')
-          filename = "OpenZsu_#{ver_num}.rbz"
-          url = "https://github.com/chill4share/openzsu4/releases/download/v#{version_str}/#{filename}"
-          
-          temp_path = download_file(url)
-          
-          UI.start_timer(0, false) do
-            begin
-              success = Sketchup.install_from_archive(temp_path)
-              if success
-                UI.messagebox("Cập nhật thành công phiên bản OpenZSU v#{version_str}! Vui lòng khởi động lại SketchUp để áp dụng các thay đổi.")
-              else
-                UI.messagebox("Cài đặt bản cập nhật thất bại.")
-              end
-            rescue => e
-              UI.messagebox("Lỗi giải nén cài đặt: #{e.message}")
-            ensure
-              File.delete(temp_path) rescue nil
+          if response.status == 1 && response.code == 200
+            temp_path = File.join(Sketchup.temp_dir, "openzsu_update_#{Time.now.to_i}.rbz")
+            File.open(temp_path, "wb") do |f|
+              f.write(response.body)
             end
+            
+            # Thực hiện cài đặt trực tiếp trong Main Thread để tăng độ ổn định
+            UI.start_timer(0, false) do
+              begin
+                success = Sketchup.install_from_archive(temp_path)
+                if success
+                  UI.status_text = "Cập nhật OpenZSU hoàn tất!"
+                  UI.messagebox("Cập nhật thành công phiên bản OpenZSU v#{version_str}! Plugin đã sẵn sàng sử dụng.")
+                else
+                  UI.messagebox("Cài đặt bản cập nhật thất bại. Vui lòng thử lại hoặc cài đặt thủ công.")
+                end
+              ensure
+                File.delete(temp_path) if temp_path && File.exist?(temp_path)
+              end
+            end
+          else
+            # Tránh gọi response.code bừa bãi khi không thành công kết nối
+            err_msg = response.status == 1 ? "HTTP #{response.code}" : "Lỗi kết nối (Status: #{response.status})"
+            UI.messagebox("Lỗi tải bản cập nhật: #{err_msg}")
           end
         rescue => e
-          UI.start_timer(0, false) do
-            UI.messagebox("Lỗi tải bản cập nhật: #{e.message}")
-          end
+          UI.messagebox("Lỗi trong quá trình xử lý file cập nhật: #{e.message}")
+        ensure
+          UI.status_text = ""
         end
       end
     end
