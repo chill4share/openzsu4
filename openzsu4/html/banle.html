@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Thống kê bản lề</span>
+                <input type="checkbox" v-model="settings.thong_ke_ban_le"
+                       @change="saveSetting('thong_ke_ban_le')" id="thong_ke_ban_le">
+                <label class="switch-label" for="thong_ke_ban_le"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.thong_ke_ban_le }">
+                <span>Tên hiển thị</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.ten_hien_thi_ban_le" @input="saveSetting('ten_hien_thi_ban_le')"
+                           :disabled="!settings.thong_ke_ban_le"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Thêm thuộc tính thống kê để xuất báo cáo.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Loại bản lề</span>
+                <div class="select-group">
+                    <select v-model="settings.loai_ban_le" @change="saveSetting('loai_ban_le')">
+                        <option value="Bản lề A">Loại A</option>
+                        <option value="Bản lề B">Loại B</option>
+                        <option value="Bản lề C">Loại C</option>
+                        <option value="Tự động">Tự động</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_ban_le" @input="saveSetting('instance_ban_le')"
+                           :class="{ 'input-error': settings.instance_ban_le && !settings.instance_ban_le.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_ban_le" @input="saveSetting('layer_ban_le')"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Chọn loại bản lề để phân biệt khi đánh dấu và thống kê.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tự động tránh đợt</span>
+                <input type="checkbox" v-model="settings.tu_dong_tranh_dot"
+                       @change="saveSetting('tu_dong_tranh_dot')" id="tu_dong_tranh_dot">
+                <label class="switch-label" for="tu_dong_tranh_dot"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tu_dong_tranh_dot }">
+                <span>Đợt cách tối đa</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('dot_cach_toi_da')"
+                            :disabled="!settings.tu_dong_tranh_dot">−</button>
+                    <input type="number"
+                            v-model.number="settings.dot_cach_toi_da"
+                            @change="saveSetting('dot_cach_toi_da')"
+                            @blur="validateNumber('dot_cach_toi_da')"
+                            :disabled="!settings.tu_dong_tranh_dot"
+                            step="0.1"
+                            min="0">
+                    <button class="spinner-btn" @click="incrementValue('dot_cach_toi_da')"
+                            :disabled="!settings.tu_dong_tranh_dot">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tự động dịch bản lề để tránh va chạm với ván đối diện trong phạm vi khoảng cách cho phép.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Chén viên thuốc</span>
+                <input type="checkbox" v-model="settings.chen_vien_thuoc"
+                       @change="saveSetting('chen_vien_thuoc')" id="chen_vien_thuoc">
+                <label class="switch-label" for="chen_vien_thuoc"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.chen_vien_thuoc }">
+                <span>Chiều cao chén</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_cao_chen')"
+                            :disabled="!settings.chen_vien_thuoc">−</button>
+                    <input type="number"
+                            v-model.number="settings.chieu_cao_chen"
+                            @change="saveSetting('chieu_cao_chen')"
+                            @blur="validateNumber('chieu_cao_chen')"
+                            :disabled="!settings.chen_vien_thuoc"
+                            :class="{ 'input-error': settings.chen_vien_thuoc && settings.chieu_cao_chen > settings.duong_kinh_chen }"
+                            step="0.1"
+                            min="0">
+                    <button class="spinner-btn" @click="incrementValue('chieu_cao_chen')"
+                            :disabled="!settings.chen_vien_thuoc">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Đường kính chén</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_chen')">−</button>
+                    <input type="number"
+                            v-model.number="settings.duong_kinh_chen"
+                            @change="saveSetting('duong_kinh_chen')"
+                            @blur="validateNumber('duong_kinh_chen')"
+                            :class="{ 'input-error': settings.chen_vien_thuoc && settings.chieu_cao_chen > settings.duong_kinh_chen }"
+                            step="0.1"
+                            min="20">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_chen')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh hình dạng tiết diện đáy chén.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Số lượng cố định</span>
+                <input type="checkbox" v-model="settings.so_luong_co_dinh"
+                       @change="saveSetting('so_luong_co_dinh')" id="so_luong_co_dinh">
+                <label class="switch-label" for="so_luong_co_dinh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.so_luong_co_dinh }">
+                <span>Số lượng bản lề</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementInt('so_luong_ban_le', 0)"
+                            :disabled="settings.so_luong_ban_le <= 0 || !settings.so_luong_co_dinh">−
+                    </button>
+                    <input type="number" v-model.number="settings.so_luong_ban_le"
+                           @change="saveSetting('so_luong_ban_le')"
+                           @blur="validateInt('so_luong_ban_le', 0)"
+                           @keyup.enter="validateInt('so_luong_ban_le', 0)"
+                           :disabled="!settings.so_luong_co_dinh"
+                           step="1" min="0">
+                    <button class="spinner-btn" @click="incrementInt('so_luong_ban_le')"
+                            :disabled="!settings.so_luong_co_dinh">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.so_luong_co_dinh }">
+                <span>Khoảng cách</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('khoang_cach_ban_le')"
+                            :disabled="settings.so_luong_co_dinh">−
+                    </button>
+                    <input type="number"
+                            v-model.number="settings.khoang_cach_ban_le"
+                            @change="saveSetting('khoang_cach_ban_le')"
+                            @blur="validateNumber('khoang_cach_ban_le')"
+                            :disabled="settings.so_luong_co_dinh"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('khoang_cach_ban_le')"
+                            :disabled="settings.so_luong_co_dinh">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Cách hai đầu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_hai_dau_ban_le')">−</button>
+                    <input type="number"
+                            v-model.number="settings.cach_hai_dau_ban_le"
+                            @change="saveSetting('cach_hai_dau_ban_le')"
+                            @blur="validateNumber('cach_hai_dau_ban_le')"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_hai_dau_ban_le')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Cách mép</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_mep')">−</button>
+                    <input type="number"
+                            v-model.number="settings.cach_mep"
+                            @change="saveSetting('cach_mep')"
+                            @blur="validateNumber('cach_mep')"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_mep')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khi tắt số lượng cố định, bản lề sẽ được chia số lượng tự động theo khoảng cách giữa các tâm bản lề. Đặt số lượng bằng 0 để bỏ qua đánh dấu bản lề.</small>
+
+        <div class="switch-stacked" v-show="danhBanLe">
+            <div class="switch">
+                <span>Đánh dấu lỗ khoan</span>
+                <input type="checkbox" v-model="settings.danh_dau_lo_khoan"
+                       @change="saveSetting('danh_dau_lo_khoan')" id="danh_dau_lo_khoan">
+                <label class="switch-label" for="danh_dau_lo_khoan"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_lo_khoan }">
+                <span>Lỗ cách nhau</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('lo_khoan_cach_nhau')"
+                            :disabled="!settings.danh_dau_lo_khoan">−</button>
+                    <input type="number"
+                            v-model.number="settings.lo_khoan_cach_nhau"
+                            @change="saveSetting('lo_khoan_cach_nhau')"
+                            @blur="validateNumber('lo_khoan_cach_nhau')"
+                            :disabled="!settings.danh_dau_lo_khoan"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('lo_khoan_cach_nhau')"
+                            :disabled="!settings.danh_dau_lo_khoan">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_lo_khoan }">
+                <span>Cách tâm chén</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('lo_khoan_cach_tam_chen')"
+                            :disabled="!settings.danh_dau_lo_khoan">−</button>
+                    <input type="number"
+                            v-model.number="settings.lo_khoan_cach_tam_chen"
+                            @change="saveSetting('lo_khoan_cach_tam_chen')"
+                            @blur="validateNumber('lo_khoan_cach_tam_chen')"
+                            :disabled="!settings.danh_dau_lo_khoan"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('lo_khoan_cach_tam_chen')"
+                            :disabled="!settings.danh_dau_lo_khoan">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_lo_khoan }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_khoan_moi_ban_le" @input="saveSetting('layer_khoan_moi_ban_le')"
+                           :disabled="!settings.danh_dau_lo_khoan"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint" v-show="danhBanLe">Đánh dấu lỗ khoan bản lề trên cánh.</small>
+
+        <div class="switch-stacked" v-show="danhBanLe">
+            <div class="switch">
+                <span>Đánh dấu loại bản lề</span>
+                <input type="checkbox" v-model="settings.danh_dau_loai"
+                       @change="saveSetting('danh_dau_loai')" id="danh_dau_loai">
+                <label class="switch-label" for="danh_dau_loai"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_loai }">
+                <span>Kiểu đánh dấu</span>
+                <div class="select-group">
+                    <select v-model="settings.kieu_danh_dau" @change="saveSetting('kieu_danh_dau')"
+                            :disabled="!settings.danh_dau_loai">
+                        <option value="cham">Chấm</option>
+                        <option value="gach">Gạch</option>
+                        <option value="chu">Chữ</option>
+                        <option value="mau">Màu</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'cham') }">
+                <span>Đường kính</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_cham')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'cham' || settings.duong_kinh_cham <= 3">−</button>
+                    <input type="number"
+                            v-model.number="settings.duong_kinh_cham"
+                            @change="saveSetting('duong_kinh_cham')"
+                            @blur="validateNumber('duong_kinh_cham')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'cham'"
+                            step="0.1"
+                            min="3">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_cham')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'cham'">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'gach') }">
+                <span>Chiều dài</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_dai_gach')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'gach' || settings.chieu_dai_gach <= 6">−</button>
+                    <input type="number"
+                            v-model.number="settings.chieu_dai_gach"
+                            @change="saveSetting('chieu_dai_gach')"
+                            @blur="validateNumber('chieu_dai_gach')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'gach'"
+                            step="0.1"
+                            min="6">
+                    <button class="spinner-btn" @click="incrementValue('chieu_dai_gach')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'gach'">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'chu') }">
+                <span>Chiều cao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_cao_chu')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'chu' || settings.chieu_cao_chu <= 3">−</button>
+                    <input type="number"
+                            v-model.number="settings.chieu_cao_chu"
+                            @change="saveSetting('chieu_cao_chu')"
+                            @blur="validateNumber('chieu_cao_chu')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'chu'"
+                            step="0.1"
+                            min="3">
+                    <button class="spinner-btn" @click="incrementValue('chieu_cao_chu')"
+                            :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'chu'">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau') }">
+                <span>Màu bản lề A</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_ban_le_a_hex" @input="saveColor('mau_ban_le_a')"
+                           :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau'">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau') }">
+                <span>Màu bản lề B</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_ban_le_b_hex" @input="saveColor('mau_ban_le_b')"
+                           :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau'">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau') }">
+                <span>Màu bản lề C</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_ban_le_c_hex" @input="saveColor('mau_ban_le_c')"
+                           :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau !== 'mau'">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_loai || settings.kieu_danh_dau === 'mau') }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_danh_dau_loai" @input="saveSetting('layer_danh_dau_loai')"
+                           :disabled="!settings.danh_dau_loai || settings.kieu_danh_dau === 'mau'"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint" v-show="danhBanLe">Đánh dấu bên trong chén để phân biệt loại bản lề.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Khoan mồi hông tủ</span>
+                <input type="checkbox" v-model="settings.khoan_moi_hong"
+                       @change="saveSetting('khoan_moi_hong')" id="khoan_moi_hong">
+                <label class="switch-label" for="khoan_moi_hong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khoan_moi_hong }">
+                <span>Lỗ cách nhau</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('lo_cach_nhau_hong')"
+                            :disabled="!settings.khoan_moi_hong">−</button>
+                    <input type="number" v-model.number="settings.lo_cach_nhau_hong"
+                           @change="saveSetting('lo_cach_nhau_hong')"
+                           @blur="validateNumber('lo_cach_nhau_hong')"
+                           :disabled="!settings.khoan_moi_hong"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('lo_cach_nhau_hong')"
+                            :disabled="!settings.khoan_moi_hong">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khoan_moi_hong }">
+                <span>Cách mép</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_mep_hong')"
+                            :disabled="!settings.khoan_moi_hong">−</button>
+                    <input type="number" v-model.number="settings.cach_mep_hong"
+                           @change="saveSetting('cach_mep_hong')"
+                           @blur="validateNumber('cach_mep_hong')"
+                           :disabled="!settings.khoan_moi_hong"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_mep_hong')"
+                            :disabled="!settings.khoan_moi_hong">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khoan_moi_hong }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_khoan_hong"
+                           @input="saveSetting('instance_khoan_hong')"
+                           :class="{ 'input-error': settings.instance_khoan_hong && !settings.instance_khoan_hong.startsWith('ABF_') }"
+                           :disabled="!settings.khoan_moi_hong"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khoan_moi_hong }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_khoan_hong"
+                           @input="saveSetting('layer_khoan_hong')"
+                           :disabled="!settings.khoan_moi_hong"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Đánh dấu lỗ khoan bản lề trên hông tủ.</small>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Đánh dấu hướng mở cánh bằng đường nét.">
+                <span>Đánh dấu hướng mở</span>
+                <input type="checkbox" v-model="settings.danh_dau_huong_mo"
+                       @change="saveSetting('danh_dau_huong_mo')" id="danh_dau_huong_mo">
+                <label class="switch-label" for="danh_dau_huong_mo"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_huong_mo }"
+                 title="Dùng nét dựng thay vì nét thường để đánh dấu hướng mở.">
+                <span :style="!settings.danh_dau_huong_mo ? 'opacity: 0.5' : ''">Dùng nét dựng</span>
+                <input type="checkbox" v-model="settings.dung_net_dung_danh_dau"
+                       @change="saveSetting('dung_net_dung_danh_dau')" id="dung_net_dung_danh_dau"
+                       :disabled="!settings.danh_dau_huong_mo">
+                <label class="switch-label" for="dung_net_dung_danh_dau"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.danh_dau_huong_mo || settings.dung_net_dung_danh_dau) }"
+                 :style="!settings.danh_dau_huong_mo || settings.dung_net_dung_danh_dau ? 'cursor: not-allowed' : ''"
+                 title="Kiểu nét dùng để đánh dấu hướng mở cánh.">
+                <span :style="!settings.danh_dau_huong_mo || settings.dung_net_dung_danh_dau ? 'opacity: 0.5' : ''">Kiểu nét</span>
+                <div class="select-group" :style="!settings.danh_dau_huong_mo || settings.dung_net_dung_danh_dau ? 'pointer-events: none' : ''">
+                    <select v-model="settings.net_danh_dau" @change="saveSetting('net_danh_dau')"
+                            :disabled="!settings.danh_dau_huong_mo || settings.dung_net_dung_danh_dau" class="line-style-select">
+                        <option value="Solid Basic">─────────</option>
+                        <option value="Short dash">─ ─ ─ ─ ─</option>
+                        <option value="Dash">── ── ──</option>
+                        <option value="Dot">· · · · · ·</option>
+                        <option value="Dash dot">── · ── ·</option>
+                        <option value="Dash double-dot">── ·· ── ··</option>
+                        <option value="Dash triple-dot">── ··· ──</option>
+                        <option value="Double-dash dot">── ── · ──</option>
+                        <option value="Double-dash double-dot">── ── ·· ──</option>
+                        <option value="Double-dash triple-dot">── ── ··· ──</option>
+                        <option value="Long-dash dash">─── ── ───</option>
+                        <option value="Long-dash double-dash">─── ── ── ───</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.danh_dau_huong_mo }"
+                 title="Layer của nét đánh dấu hướng mở.">
+                <span :style="!settings.danh_dau_huong_mo ? 'opacity: 0.5' : ''">Layer</span>
+                <div class="text-input-group" :style="!settings.danh_dau_huong_mo ? 'pointer-events: none' : ''">
+                    <input type="text" v-model="settings.layer_danh_dau" @input="saveSetting('layer_danh_dau')"
+                           :disabled="!settings.danh_dau_huong_mo"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Cài đặt đánh dấu hướng mở.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('ban_le')],
+        data: {
+            settings: {
+                danh_dau_huong_mo: true,
+                dung_net_dung_danh_dau: false,
+                net_danh_dau: "Dash",
+                instance_danh_dau: "",
+                layer_danh_dau: "ABF_HM",
+                danh_dau_lo_khoan: true,
+                lo_khoan_cach_nhau: 48.0,
+                lo_khoan_cach_tam_chen: 5.5,
+                layer_khoan_moi_ban_le: "ABF_D3",
+                danh_dau_loai: true,
+                kieu_danh_dau: "cham",
+                duong_kinh_cham: 3,
+                chieu_dai_gach: 16,
+                chieu_cao_chu: 20,
+                mau_ban_le_a: [255, 0, 0],
+                mau_ban_le_b: [0, 255, 0],
+                mau_ban_le_c: [0, 0, 255],
+                layer_danh_dau_loai: "ABF_KH",
+                thong_ke_ban_le: true,
+                ten_hien_thi_ban_le: "",
+                loai_ban_le: "Tự động",
+                tu_dong_tranh_dot: true,
+                dot_cach_toi_da: 50.0,
+                duong_kinh_chen: 35.0,
+                chen_vien_thuoc: false,
+                chieu_cao_chen: 22.5,
+                cach_mep: 22.5,
+                so_luong_co_dinh: true,
+                so_luong_ban_le: 2,
+                khoang_cach_ban_le: 500.0,
+                cach_hai_dau_ban_le: 100.0,
+                instance_ban_le: "ABF_BL",
+                layer_ban_le: "ABF_BL",
+                khoan_moi_hong: false,
+                lo_cach_nhau_hong: 32,
+                cach_mep_hong: 37,
+                instance_khoan_hong: "ABF_KM",
+                layer_khoan_hong: "ABF_D3"
+            }
+        },
+        computed: {
+            danhBanLe() {
+                return !(this.settings.so_luong_co_dinh && this.settings.so_luong_ban_le === 0);
+            },
+            mau_ban_le_a_hex: colorComputed('mau_ban_le_a'),
+            mau_ban_le_b_hex: colorComputed('mau_ban_le_b'),
+            mau_ban_le_c_hex: colorComputed('mau_ban_le_c')
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

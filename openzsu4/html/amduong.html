@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Sử dụng tiết diện</span>
+                <input type="checkbox" v-model="settings.su_dung_tiet_dien"
+                       @change="saveSetting('su_dung_tiet_dien')" id="su_dung_tiet_dien">
+                <label class="switch-label" for="su_dung_tiet_dien"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.su_dung_tiet_dien }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_tiet_dien"
+                           @input="saveSetting('instance_tiet_dien')"
+                           :class="{ 'input-error': settings.instance_tiet_dien && !settings.instance_tiet_dien.startsWith('ABF_') }"
+                           :disabled="!settings.su_dung_tiet_dien">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.su_dung_tiet_dien }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_tiet_dien"
+                           @input="saveSetting('layer_tiet_dien')"
+                           :disabled="!settings.su_dung_tiet_dien">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tạo tiết diện thay vì giao cắt thật trên ván.</small>
+
+        <div v-show="!settings.su_dung_tiet_dien" class="switch-stacked">
+            <div class="switch">
+                <span>Chặn dán cạnh khấu</span>
+                <input type="checkbox" v-model="settings.chan_dan_canh_khau"
+                       @change="saveSetting('chan_dan_canh_khau')" id="chan_dan_canh_khau">
+                <label class="switch-label" for="chan_dan_canh_khau"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.chan_dan_canh_khau }">
+                <span>Tô màu cạnh bị chặn</span>
+                <input type="checkbox" v-model="settings.to_mau_canh_bi_chan"
+                       @change="saveSetting('to_mau_canh_bi_chan')" id="to_mau_canh_bi_chan"
+                       :disabled="!settings.chan_dan_canh_khau">
+                <label class="switch-label" for="to_mau_canh_bi_chan"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !(settings.chan_dan_canh_khau && settings.to_mau_canh_bi_chan) }">
+                <span>Màu sắc chặn</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_sac_chan_hex" @input="saveColor('mau_sac_chan')"
+                           :disabled="!(settings.chan_dan_canh_khau && settings.to_mau_canh_bi_chan)">
+                </div>
+            </div>
+        </div>
+        <small v-show="!settings.su_dung_tiet_dien" class="switch-stacked-hint">Đánh dấu các mặt trong phần khấu để chặn dán cạnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Khử dao</span>
+                <input type="checkbox" v-model="settings.khu_dao"
+                       @change="saveSetting('khu_dao')" id="khu_dao">
+                <label class="switch-label" for="khu_dao"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khu_dao }">
+                <span>Tiết diện vuông</span>
+                <input type="checkbox" v-model="settings.tiet_dien_vuong"
+                       @change="saveSetting('tiet_dien_vuong')" id="tiet_dien_vuong"
+                       :disabled="!settings.khu_dao">
+                <label class="switch-label" for="tiet_dien_vuong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khu_dao }">
+                <span>Đường kính dao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_dao')"
+                            :disabled="!settings.khu_dao">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.duong_kinh_dao"
+                            @change="saveSetting('duong_kinh_dao')"
+                            @blur="validateNumber('duong_kinh_dao')"
+                            :disabled="!settings.khu_dao"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_dao')"
+                            :disabled="!settings.khu_dao">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tiết diện vuông cho hiệu năng nesting cao hơn.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Khấu sâu thêm</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('khau_sau_them')">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.khau_sau_them"
+                            @change="saveSetting('khau_sau_them')"
+                            @blur="validateNumber('khau_sau_them')"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('khau_sau_them')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Hở cạnh thêm</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_canh_them')">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.ho_canh_them"
+                            @change="saveSetting('ho_canh_them')"
+                            @blur="validateNumber('ho_canh_them')"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_canh_them')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tăng kích thước khe. Có thể nhập số âm.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Màu sắc chính</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_sac_1_hex" @input="saveColor('mau_sac_1')">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Màu sắc phụ</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_sac_2_hex" @input="saveColor('mau_sac_2')">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Màu hiển thị khi chọn đối tượng.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cô lập đối tượng</span>
+                <input type="checkbox" v-model="settings.co_lap_doi_tuong" @change="saveSetting('co_lap_doi_tuong')"
+                       id="co_lap_doi_tuong">
+                <label class="switch-label" for="co_lap_doi_tuong"></label>
+            </div>
+            <div class="switch">
+                <span>Ẩn nét khi kích hoạt</span>
+                <input type="checkbox" v-model="settings.an_net"
+                       @change="saveSetting('an_net')" id="an_net">
+                <label class="switch-label" for="an_net"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chọn khi kích hoạt công cụ.</small>
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('am_duong')],
+        data: {
+            settings: {
+                su_dung_tiet_dien: false,
+                co_lap_doi_tuong: true,
+                an_net: false,
+                chan_dan_canh_khau: false,
+                to_mau_canh_bi_chan: true,
+                duong_kinh_dao: 6.0,
+                khu_dao: true,
+                tiet_dien_vuong: false,
+                khau_sau_them: 0.0,
+                ho_canh_them: 0.0,
+                layer_tiet_dien: "ABF_AD",
+                instance_tiet_dien: "ABF_AD",
+                mau_sac_1: [60, 175, 214],
+                mau_sac_2: [210, 117, 159],
+                mau_sac_chan: [210, 117, 159]
+            }
+        },
+        computed: {
+            mau_sac_1_hex: colorComputed('mau_sac_1'),
+            mau_sac_2_hex: colorComputed('mau_sac_2'),
+            mau_sac_chan_hex: colorComputed('mau_sac_chan')
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Phương pháp vẽ</span>
+                <div class="select-group">
+                    <select v-model="settings.phuong_phap_ve" @change="saveSetting('phuong_phap_ve')">
+                        <option value="2_diem">2 điểm</option>
+                        <option value="3_diem">3 điểm</option>
+                        <option value="tu_do">Tự do</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Phương pháp vẽ hình tổng thể gốc.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo component</span>
+                <input type="checkbox" v-model="settings.tao_component"
+                       @change="saveSetting('tao_component')" id="tao_component">
+                <label class="switch-label" for="tao_component"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Các ván được tạo sẽ trở thành component với nhau.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Độ dày ván</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day')">−</button>
+                    <input type="number" v-model.number="settings.do_day"
+                           @change="saveSetting('do_day')"
+                           @blur="validateNumber('do_day')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('do_day')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Độ dày của ván được tạo ra.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance" @input="saveSetting('instance')"
+                           :class="{ 'input-error': settings.instance && settings.instance.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer" @input="saveSetting('layer')"
+                           :class="{ 'input-error': settings.layer && settings.layer.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Không nên đặt tên instance và layer bắt đầu bằng 'ABF_' để tránh lỗi khi dán cạnh bằng ABF.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Hở đều biên ngoài</span>
+                <input type="checkbox" v-model="settings.ho_deu_bien_ngoai"
+                       @change="saveSetting('ho_deu_bien_ngoai')" id="ho_deu_bien_ngoai">
+                <label class="switch-label" for="ho_deu_bien_ngoai"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.ho_deu_bien_ngoai }">
+                <span>Hở biên ngoài</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_bien_ngoai')"
+                            :disabled="!settings.ho_deu_bien_ngoai">−</button>
+                    <input type="number" v-model.number="settings.ho_bien_ngoai"
+                           @change="saveSetting('ho_bien_ngoai')"
+                           @blur="validateNumber('ho_bien_ngoai')"
+                           :disabled="!settings.ho_deu_bien_ngoai"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_bien_ngoai')"
+                            :disabled="!settings.ho_deu_bien_ngoai">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.ho_deu_bien_ngoai }">
+                <span>Hở trái</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_trai')"
+                            :disabled="settings.ho_deu_bien_ngoai">−</button>
+                    <input type="number" v-model.number="settings.ho_trai"
+                           @change="saveSetting('ho_trai')"
+                           @blur="validateNumber('ho_trai')"
+                           :disabled="settings.ho_deu_bien_ngoai"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_trai')"
+                            :disabled="settings.ho_deu_bien_ngoai">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.ho_deu_bien_ngoai }">
+                <span>Hở phải</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_phai')"
+                            :disabled="settings.ho_deu_bien_ngoai">−</button>
+                    <input type="number" v-model.number="settings.ho_phai"
+                           @change="saveSetting('ho_phai')"
+                           @blur="validateNumber('ho_phai')"
+                           :disabled="settings.ho_deu_bien_ngoai"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_phai')"
+                            :disabled="settings.ho_deu_bien_ngoai">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.ho_deu_bien_ngoai }">
+                <span>Hở trên</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_tren')"
+                            :disabled="settings.ho_deu_bien_ngoai">−</button>
+                    <input type="number" v-model.number="settings.ho_tren"
+                           @change="saveSetting('ho_tren')"
+                           @blur="validateNumber('ho_tren')"
+                           :disabled="settings.ho_deu_bien_ngoai"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_tren')"
+                            :disabled="settings.ho_deu_bien_ngoai">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.ho_deu_bien_ngoai }">
+                <span>Hở dưới</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_duoi')"
+                            :disabled="settings.ho_deu_bien_ngoai">−</button>
+                    <input type="number" v-model.number="settings.ho_duoi"
+                           @change="saveSetting('ho_duoi')"
+                           @blur="validateNumber('ho_duoi')"
+                           :disabled="settings.ho_deu_bien_ngoai"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_duoi')"
+                            :disabled="settings.ho_deu_bien_ngoai">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Hở giữa các cánh</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ho_giua_cac_canh')">−</button>
+                    <input type="number" v-model.number="settings.ho_giua_cac_canh"
+                           @change="saveSetting('ho_giua_cac_canh')"
+                           @blur="validateNumber('ho_giua_cac_canh')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ho_giua_cac_canh')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khoảng hở giữa các ván với nhau và với biên ngoài của hình tổng thể gốc.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cánh cách mặt gốc</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('canh_cach_mat_goc')">−</button>
+                    <input type="number"
+                           v-model.number="settings.canh_cach_mat_goc"
+                           @change="validateNumber('canh_cach_mat_goc')"
+                           @blur="validateNumber('canh_cach_mat_goc')"
+                           step="0.5">
+                    <button class="spinner-btn" @click="incrementValue('canh_cach_mat_goc')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khoảng cách giữa mặt phẳng tham chiếu và cánh được tạo ra.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Hiển thị kích thước</span>
+                <input type="checkbox" v-model="settings.hien_thi_kich_thuoc"
+                       @change="saveSetting('hien_thi_kich_thuoc')" id="hien_thi_kich_thuoc">
+                <label class="switch-label" for="hien_thi_kich_thuoc"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Hiển thị kích thước ván trên hình xem trước.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('tao_canh')],
+        data: {
+            settings: {
+                phuong_phap_ve: "2_diem",
+                tao_component: false,
+                do_day: 17.5,
+                ho_bien_ngoai: 2.0,
+                ho_deu_bien_ngoai: true,
+                ho_trai: 2.0,
+                ho_phai: 2.0,
+                ho_tren: 2.0,
+                ho_duoi: 2.0,
+                ho_giua_cac_canh: 2.0,
+                instance: "",
+                layer: "",
+                canh_cach_mat_goc: 0,
+                hien_thi_kich_thuoc: false
+            }
+        },
+        computed: {},
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

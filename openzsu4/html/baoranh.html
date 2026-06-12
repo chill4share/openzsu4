@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tính theo không gian</span>
+                <input type="checkbox" v-model="settings.tinh_theo_khong_gian"
+                       @change="saveSetting('tinh_theo_khong_gian')" id="tinh_theo_khong_gian">
+                <label class="switch-label" for="tinh_theo_khong_gian"></label>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Tính giao cắt với các ván khác khi xác định mặt.</p>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Thống kê rãnh</span>
+                <input type="checkbox" v-model="settings.thong_ke_ranh"
+                       @change="saveSetting('thong_ke_ranh')" id="thong_ke_ranh">
+                <label class="switch-label" for="thong_ke_ranh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.thong_ke_ranh }">
+                <span>Tên hiển thị</span>
+                <div class="text-input-group">
+                    <input :disabled="!settings.thong_ke_ranh" type="text" v-model="settings.ten_hien_thi"
+                           @input="saveSetting('ten_hien_thi')"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Thêm thuộc tính thống kê cho rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Số lượng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementInt('so_luong', 1)">−</button>
+                    <input type="number" v-model.number="settings.so_luong"
+                           @change="saveSetting('so_luong')"
+                           @blur="validateInt('so_luong', 1)"
+                           step="1" min="1">
+                    <button class="spinner-btn" @click="incrementInt('so_luong')">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.so_luong <= 1 }">
+                <span>Khoảng cách</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" :disabled="settings.so_luong <= 1" @click="decrementValue('khoang_cach')">−</button>
+                    <input type="number" :disabled="settings.so_luong <= 1"
+                           v-model.number="settings.khoang_cach"
+                           @change="saveSetting('khoang_cach')"
+                           @blur="validateNumber('khoang_cach')"
+                           step="0.1">
+                    <button class="spinner-btn" :disabled="settings.so_luong <= 1" @click="incrementValue('khoang_cach')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Số lượng rãnh và khoảng cách giữa các rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Độ dài cố định</span>
+                <input type="checkbox" v-model="settings.do_dai_co_dinh"
+                       @change="saveSetting('do_dai_co_dinh')" id="do_dai_co_dinh">
+                <label class="switch-label" for="do_dai_co_dinh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.do_dai_co_dinh }">
+                <span>Chiều dài</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" :disabled="!settings.do_dai_co_dinh || settings.chieu_dai_toi_da <= 1" @click="decrementValue('chieu_dai_toi_da', 0.1, 1)">−</button>
+                    <input type="number" :disabled="!settings.do_dai_co_dinh"
+                           v-model.number="settings.chieu_dai_toi_da"
+                           @change="saveSetting('chieu_dai_toi_da')"
+                           @blur="validateNumber('chieu_dai_toi_da'); if(settings.chieu_dai_toi_da < 1) { settings.chieu_dai_toi_da = 1; saveSetting('chieu_dai_toi_da') }"
+                           min="1"
+                           step="0.1">
+                    <button class="spinner-btn" :disabled="!settings.do_dai_co_dinh" @click="incrementValue('chieu_dai_toi_da')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Chiều rộng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_rong')">−</button>
+                    <input type="number" v-model.number="settings.chieu_rong"
+                           @change="saveSetting('chieu_rong')"
+                           @blur="validateNumber('chieu_rong')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('chieu_rong')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Điều chỉnh kích thước rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cách đều hai đầu</span>
+                <input type="checkbox" v-model="settings.cach_deu_hai_dau"
+                       @change="saveSetting('cach_deu_hai_dau')" id="cach_deu_hai_dau">
+                <label class="switch-label" for="cach_deu_hai_dau"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.do_dai_co_dinh && settings.cach_deu_hai_dau }">
+                <span>{{ settings.cach_deu_hai_dau ? 'Cách hai đầu' : 'Cách trước' }}</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_truoc')">−</button>
+                    <input type="number" v-model.number="settings.cach_truoc" @change="saveSetting('cach_truoc')"
+                           @blur="validateNumber('cach_truoc')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_truoc')">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.cach_deu_hai_dau || settings.do_dai_co_dinh) }">
+                <span>Cách sau</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_sau')">−</button>
+                    <input type="number" v-model.number="settings.cach_sau" @change="saveSetting('cach_sau')"
+                           @blur="validateNumber('cach_sau')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_sau')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Điều chỉnh vị trí rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cách mép</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_mep')">−</button>
+                    <input type="number" v-model.number="settings.cach_mep"
+                           @change="saveSetting('cach_mep')"
+                           @blur="validateNumber('cach_mep')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_mep')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khoảng cách giữa mép rãnh đến mép ván.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_ranh" @input="saveSetting('instance_ranh')"
+                           :class="{ 'input-error': settings.instance_ranh && !settings.instance_ranh.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_ranh" @input="saveSetting('layer_ranh')"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Bắt buộc phải đặt tên instance bắt đầu bằng 'ABF_' để tránh lỗi khi nesting bằng ABF.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cạnh dài tối thiểu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('canh_dai_toi_thieu')">−</button>
+                    <input type="number" v-model.number="settings.canh_dai_toi_thieu"
+                           @change="saveSetting('canh_dai_toi_thieu')"
+                           @blur="validateNumber('canh_dai_toi_thieu')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('canh_dai_toi_thieu')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Ván dày tối thiểu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('van_day_toi_thieu')">−</button>
+                    <input type="number" v-model.number="settings.van_day_toi_thieu"
+                           @change="saveSetting('van_day_toi_thieu')"
+                           @blur="validateNumber('van_day_toi_thieu')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('van_day_toi_thieu')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Điều kiện ván và cạnh để đánh rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Mô phỏng đèn</span>
+                <input type="checkbox" v-model="settings.mo_phong_led"
+                       @change="saveSetting('mo_phong_led')" id="mo_phong_led">
+                <label class="switch-label" for="mo_phong_led"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.mo_phong_led }">
+                <span>Màu sắc đèn</span>
+                <div class="color-input-group">
+                    <input :disabled="!settings.mo_phong_led" type="color" v-model="mau_sac_led_hex" @input="onColorChange">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.mo_phong_led }">
+                <span>Nhiệt độ màu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" :disabled="!settings.mo_phong_led" @click="decrementTemp">−</button>
+                    <input
+                            :disabled="!settings.mo_phong_led"
+                            type="number"
+                            v-model.number="nhiet_do_mau"
+                            @change="onTempChange"
+                            min="1000"
+                            max="9000"
+                            step="100"
+                            placeholder="K">
+                    <button class="spinner-btn" :disabled="!settings.mo_phong_led" @click="incrementTemp">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.mo_phong_led }">
+                <span>Chiều cao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" :disabled="!settings.mo_phong_led"
+                            @click="decrementValue('chieu_cao_mo_phong')">−
+                    </button>
+                    <input
+                            type="number"
+                            :disabled="!settings.mo_phong_led"
+                            v-model.number="settings.chieu_cao_mo_phong"
+                            @change="saveSetting('chieu_cao_mo_phong')"
+                            @blur="validateNumber('chieu_cao_mo_phong')"
+                            step="0.1">
+                    <button class="spinner-btn" :disabled="!settings.mo_phong_led"
+                            @click="incrementValue('chieu_cao_mo_phong')">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.mo_phong_led }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input :disabled="!settings.mo_phong_led" type="text" v-model="settings.layer_hien_thi"
+                           @input="saveSetting('layer_hien_thi')"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Mô phỏng đèn LED khi đánh rãnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Hiển thị kích thước</span>
+                <input type="checkbox" v-model="settings.hien_thi_kich_thuoc"
+                       @change="saveSetting('hien_thi_kich_thuoc')" id="hien_thi_kich_thuoc">
+                <label class="switch-label" for="hien_thi_kich_thuoc"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh hình xem trước.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('bao_ranh')],
+        data: {
+            settings: {
+                tinh_theo_khong_gian: false,
+                do_dai_co_dinh: false,
+                chieu_dai_toi_da: 100,
+                cach_deu_hai_dau: true,
+                cach_truoc: 0,
+                cach_sau: 0,
+                cach_mep: 50.0,
+                chieu_rong: 12.0,
+
+                canh_dai_toi_thieu: 200,
+                van_day_toi_thieu: 15,
+                instance_ranh: "ABF_BR",
+                layer_ranh: "ABF_BR",
+                thong_ke_ranh: true,
+                ten_hien_thi: "LED",
+                mo_phong_led: true,
+                chieu_cao_mo_phong: 200,
+                mau_sac_led: [255, 168, 55],
+                layer_hien_thi: "ABF_BR",
+                hien_thi_kich_thuoc: false,
+                so_luong: 1,
+                khoang_cach: 50
+            },
+            nhiet_do_mau: null
+        },
+        computed: {
+            mau_sac_led_hex: colorComputed('mau_sac_led')
+        },
+        methods: {
+            rgbToKelvin(r, g, b) {
+                let bestMatch = null;
+                let minDiff = Infinity;
+
+                for (let k = 1000; k <= 9000; k += 100) {
+                    const rgb = this.kelvinToRgb(k);
+                    const diff = Math.abs(rgb[0] - r) + Math.abs(rgb[1] - g) + Math.abs(rgb[2] - b);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        bestMatch = k;
+                    }
+                }
+
+                return minDiff <= 15 ? bestMatch : null;
+            },
+
+            kelvinToRgb(kelvin) {
+                const temp = kelvin / 100;
+                let r, g, b;
+
+                if (temp <= 66) {
+                    r = 255;
+                } else {
+                    r = 329.698727446 * Math.pow(temp - 60, -0.1332047592);
+                    r = Math.max(0, Math.min(255, r));
+                }
+
+                if (temp <= 66) {
+                    g = 99.4708025861 * Math.log(temp) - 161.1195681661;
+                } else {
+                    g = 288.1221695283 * Math.pow(temp - 60, -0.0755148492);
+                }
+                g = Math.max(0, Math.min(255, g));
+
+                if (temp >= 66) {
+                    b = 255;
+                } else if (temp <= 19) {
+                    b = 0;
+                } else {
+                    b = 138.5177312231 * Math.log(temp - 10) - 305.0447927307;
+                    b = Math.max(0, Math.min(255, b));
+                }
+
+                return [Math.round(r), Math.round(g), Math.round(b)];
+            },
+
+            onColorChange() {
+                this.nhiet_do_mau = null;
+                this.saveSetting('mau_sac_led');
+            },
+
+            onTempChange() {
+                if (this.nhiet_do_mau === null || this.nhiet_do_mau === '') return;
+
+                let temp = parseInt(this.nhiet_do_mau);
+                if (isNaN(temp)) return;
+
+                temp = Math.max(1000, Math.min(9000, temp));
+                this.nhiet_do_mau = temp;
+                this.settings.mau_sac_led = this.kelvinToRgb(temp);
+                this.saveSetting('mau_sac_led');
+            },
+
+            incrementTemp() {
+                if (this.nhiet_do_mau === null || this.nhiet_do_mau === '') {
+                    this.nhiet_do_mau = 1000;
+                } else {
+                    this.nhiet_do_mau = Math.min(9000, this.nhiet_do_mau + 100);
+                }
+                this.settings.mau_sac_led = this.kelvinToRgb(this.nhiet_do_mau);
+                this.saveSetting('mau_sac_led');
+            },
+
+            decrementTemp() {
+                if (this.nhiet_do_mau === null || this.nhiet_do_mau === '') {
+                    this.nhiet_do_mau = 9000;
+                } else {
+                    this.nhiet_do_mau = Math.max(1000, this.nhiet_do_mau - 100);
+                }
+                this.settings.mau_sac_led = this.kelvinToRgb(this.nhiet_do_mau);
+                this.saveSetting('mau_sac_led');
+            },
+
+            applyPresetSettings(presetSettings) {
+                Object.keys(presetSettings).forEach(key => {
+                    if (this.settings.hasOwnProperty(key)) {
+                        let value = presetSettings[key];
+                        if (key === 'mau_sac_led' && typeof value === 'string') {
+                            value = value.split(',').map(v => parseInt(v.trim()));
+                        }
+                        this.$set(this.settings, key, value);
+                    }
+                });
+                const rgb = this.settings.mau_sac_led;
+                this.nhiet_do_mau = this.rgbToKelvin(rgb[0], rgb[1], rgb[2]);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

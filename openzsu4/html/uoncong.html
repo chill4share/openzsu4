@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Độ nhạy</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementInt('do_nhay', 1)"
+                            :disabled="settings.do_nhay <= 1">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.do_nhay"
+                            @change="validateIntRange('do_nhay', 1, 10); saveSetting('do_nhay')"
+                            @blur="validateIntRange('do_nhay', 1, 10)"
+                            step="1"
+                            min="1"
+                            max="10">
+                    <button class="spinner-btn" @click="incrementInt('do_nhay', 10)"
+                            :disabled="settings.do_nhay >= 10">+
+                    </button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Độ nhạy càng lớn, càng nhiều mặt cong gần nhau được gộp chung khi tính toán tạo nét xẻ.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Độ dày ván</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day_van')">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.do_day_van"
+                            @change="saveSetting('do_day_van')"
+                            @blur="validateNumber('do_day_van')"
+                            :class="{ 'input-error': settings.chieu_rong_xuong > 0 && settings.chieu_rong_xuong < settings.do_day_van }"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('do_day_van')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_van" @input="saveSetting('instance_van')"
+                           :class="{ 'input-error': settings.instance_van && settings.instance_van.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_van" @input="saveSetting('layer_van')"
+                           :class="{ 'input-error': settings.layer_van && settings.layer_van.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Không nên đặt tên instance và layer bắt đầu bằng 'ABF_' để tránh lỗi khi dán cạnh bằng ABF.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Kiểu nét xẻ</span>
+                <div class="select-group">
+                    <select v-model="settings.kieu_net_xe" @change="saveSetting('kieu_net_xe')">
+                        <option value="net_don">Nét đơn</option>
+                        <option value="net_lien">Nét liền</option>
+                        <option value="bao_nen">Bào nền</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.kieu_net_xe === 'bao_nen' }">
+                <span>Đường kính dao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_dao')"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.duong_kinh_dao"
+                            @change="saveSetting('duong_kinh_dao')"
+                            @blur="validateNumber('duong_kinh_dao')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_dao')"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.kieu_net_xe === 'bao_nen' }">
+                <span>Thịt chừa lại</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('thit_chua_lai')"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.thit_chua_lai"
+                            @change="saveSetting('thit_chua_lai')"
+                            @blur="validateNumber('thit_chua_lai')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">
+                    <button class="spinner-btn" @click="incrementValue('thit_chua_lai')"
+                            :disabled="settings.kieu_net_xe === 'bao_nen'">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Mở rộng biên</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('mo_rong_bien')">−</button>
+                    <input
+                            type="number"
+                            v-model.number="settings.mo_rong_bien"
+                            @change="saveSetting('mo_rong_bien')"
+                            @blur="validateNumber('mo_rong_bien')"
+                            step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('mo_rong_bien')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.instance_net_xe"
+                            @input="saveSetting('instance_net_xe')"
+                            :class="{ 'input-error': settings.instance_net_xe && !settings.instance_net_xe.startsWith('ABF_') }"
+                            placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.layer_net_xe"
+                            @input="saveSetting('layer_net_xe')"
+                            placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Nét đơn tạo từng đường tách nhau, nét liền tạo đường liên tục, bào nền tạo tiết diện bào toàn bộ thịt.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo đường bảo vệ</span>
+                <input type="checkbox" v-model="settings.tao_duong_bao_ve"
+                       @change="saveSetting('tao_duong_bao_ve')" id="tao_duong_bao_ve">
+                <label class="switch-label" for="tao_duong_bao_ve"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_duong_bao_ve }">
+                <span>Cách mép</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_mep')"
+                            :disabled="!settings.tao_duong_bao_ve">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.cach_mep"
+                            @change="saveSetting('cach_mep')"
+                            @blur="validateNumber('cach_mep')"
+                            step="0.1"
+                            :disabled="!settings.tao_duong_bao_ve">
+                    <button class="spinner-btn" @click="incrementValue('cach_mep')"
+                            :disabled="!settings.tao_duong_bao_ve">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_duong_bao_ve }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.instance_bao_ve"
+                            @input="saveSetting('instance_bao_ve')"
+                            :class="{ 'input-error': settings.instance_bao_ve && !settings.instance_bao_ve.startsWith('ABF_') }"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_duong_bao_ve">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_duong_bao_ve }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.layer_bao_ve"
+                            @input="saveSetting('layer_bao_ve')"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_duong_bao_ve">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Chống mẻ thịt khi xẻ rãnh.</small>
+
+        <div v-show="settings.kieu_net_xe === 'bao_nen'" class="switch-stacked">
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.kieu_net_xe !== 'bao_nen' }">
+                <span>Tạo lớp lót</span>
+                <input type="checkbox" v-model="settings.tao_lop_lot"
+                       @change="saveSetting('tao_lop_lot')" id="tao_lop_lot"
+                       :disabled="settings.kieu_net_xe !== 'bao_nen'">
+                <label class="switch-label" for="tao_lop_lot"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Tạo khối mô phỏng</span>
+                <input type="checkbox" v-model="settings.mo_phong_lop_lot"
+                       @change="saveSetting('mo_phong_lop_lot')" id="mo_phong_lop_lot"
+                       :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                <label class="switch-label" for="mo_phong_lop_lot"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Độ dày lớp lót</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.do_day_lop_lot"
+                            @change="saveSetting('do_day_lop_lot')"
+                            @blur="validateNumber('do_day_lop_lot')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                    <button class="spinner-btn" @click="incrementValue('do_day_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Sửa chiều rộng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('mo_rong_bien_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.mo_rong_bien_lop_lot"
+                            @change="saveSetting('mo_rong_bien_lop_lot')"
+                            @blur="validateNumber('mo_rong_bien_lop_lot')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                    <button class="spinner-btn" @click="incrementValue('mo_rong_bien_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Đường kính dao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_dao_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.duong_kinh_dao_lop_lot"
+                            @change="saveSetting('duong_kinh_dao_lop_lot')"
+                            @blur="validateNumber('duong_kinh_dao_lop_lot')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_dao_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Thịt chừa lại</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('thit_chua_lai_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.thit_chua_lai_lop_lot"
+                            @change="saveSetting('thit_chua_lai_lop_lot')"
+                            @blur="validateNumber('thit_chua_lai_lop_lot')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                    <button class="spinner-btn" @click="incrementValue('thit_chua_lai_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Thịt chừa hai đầu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('thit_chua_hai_dau_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.thit_chua_hai_dau_lop_lot"
+                            @change="saveSetting('thit_chua_hai_dau_lop_lot')"
+                            @blur="validateNumber('thit_chua_hai_dau_lop_lot')"
+                            step="0.1"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                    <button class="spinner-btn" @click="incrementValue('thit_chua_hai_dau_lop_lot')"
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.instance_lop_lot"
+                            @input="saveSetting('instance_lop_lot')"
+                            :class="{ 'input-error': settings.instance_lop_lot && !settings.instance_lop_lot.startsWith('ABF_') }"
+                            placeholder="Nhập tên..."
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.layer_lop_lot"
+                            @input="saveSetting('layer_lop_lot')"
+                            placeholder="Nhập tên..."
+                            :disabled="settings.kieu_net_xe !== 'bao_nen' || !settings.tao_lop_lot">
+                </div>
+            </div>
+        </div>
+        <small v-show="settings.kieu_net_xe === 'bao_nen'" class="switch-stacked-hint">Tạo lớp lót chống gằn khi sử dụng kiểu bào nền.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo xương dưỡng</span>
+                <input type="checkbox" v-model="settings.tao_xuong_duong"
+                       @change="saveSetting('tao_xuong_duong')" id="tao_xuong_duong">
+                <label class="switch-label" for="tao_xuong_duong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Hiển thị xem trước</span>
+                <input type="checkbox" v-model="settings.hien_thi_xuong_duong"
+                       @change="saveSetting('hien_thi_xuong_duong')" id="hien_thi_xuong_duong"
+                       :disabled="!settings.tao_xuong_duong">
+                <label class="switch-label" for="hien_thi_xuong_duong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_xuong_duong || settings.kieu_net_xe === 'bao_nen') }">
+                <span>Kéo dài xương</span>
+                <input type="checkbox" v-model="settings.keo_dai_xuong"
+                       @change="onXuongKeoDaiChange" id="keo_dai_xuong"
+                       :disabled="!settings.tao_xuong_duong || settings.kieu_net_xe === 'bao_nen'">
+                <label class="switch-label" for="keo_dai_xuong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_xuong_duong || settings.keo_dai_xuong || settings.kieu_net_xe === 'bao_nen') }">
+                <span>Mở rộng xương</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('mo_rong_xuong', 0)"
+                            :disabled="!settings.tao_xuong_duong || settings.keo_dai_xuong || settings.kieu_net_xe === 'bao_nen'">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.mo_rong_xuong"
+                            @change="saveSetting('mo_rong_xuong')"
+                            @blur="validateNumber('mo_rong_xuong')"
+                            step="0.1"
+                            :disabled="!settings.tao_xuong_duong || settings.keo_dai_xuong || settings.kieu_net_xe === 'bao_nen'">
+                    <button class="spinner-btn" @click="incrementValue('mo_rong_xuong')"
+                            :disabled="!settings.tao_xuong_duong || settings.keo_dai_xuong || settings.kieu_net_xe === 'bao_nen'">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Số lượng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementInt('so_luong_xuong', 0)"
+                            :disabled="!settings.tao_xuong_duong || settings.so_luong_xuong <= 0">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.so_luong_xuong"
+                            @change="saveSetting('so_luong_xuong')"
+                            @blur="validateInt('so_luong_xuong', 0)"
+                            step="1"
+                            min="0"
+                            :disabled="!settings.tao_xuong_duong">
+                    <button class="spinner-btn" @click="incrementInt('so_luong_xuong')"
+                            :disabled="!settings.tao_xuong_duong">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Chiều dày</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_day_xuong', 0)"
+                            :disabled="!settings.tao_xuong_duong">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.chieu_day_xuong"
+                            @change="saveSetting('chieu_day_xuong')"
+                            @blur="validateNumber('chieu_day_xuong', 0)"
+                            step="0.1"
+                            min="0"
+                            :disabled="!settings.tao_xuong_duong">
+                    <button class="spinner-btn" @click="incrementValue('chieu_day_xuong')"
+                            :disabled="!settings.tao_xuong_duong">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Chiều rộng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_rong_xuong', 0)"
+                            :disabled="!settings.tao_xuong_duong">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.chieu_rong_xuong"
+                            @change="saveSetting('chieu_rong_xuong')"
+                            @blur="validateNumber('chieu_rong_xuong', 0)"
+                            :class="{ 'input-error': settings.chieu_rong_xuong > 0 && settings.chieu_rong_xuong < settings.do_day_van }"
+                            step="0.1"
+                            min="0"
+                            :disabled="!settings.tao_xuong_duong">
+                    <button class="spinner-btn" @click="incrementValue('chieu_rong_xuong')"
+                            :disabled="!settings.tao_xuong_duong">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.instance_xuong"
+                            @input="saveSetting('instance_xuong')"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_xuong_duong">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_xuong_duong }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.layer_xuong"
+                            @input="saveSetting('layer_xuong')"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_xuong_duong">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tạo xương dưỡng để hỗ trợ uốn.</small>
+
+        <div v-show="settings.tao_xuong_duong && settings.kieu_net_xe !== 'bao_nen'" class="switch-stacked">
+            <div class="switch">
+                <span>Tạo khe dưỡng</span>
+                <input type="checkbox" v-model="settings.tao_khe_duong"
+                       @change="saveSetting('tao_khe_duong')" id="tao_khe_duong">
+                <label class="switch-label" for="tao_khe_duong"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_khe_duong || !settings.keo_dai_xuong) }">
+                <span>Kéo dài khe</span>
+                <input type="checkbox" v-model="settings.keo_dai_khe"
+                       @change="saveSetting('keo_dai_khe')" id="keo_dai_khe"
+                       :disabled="!settings.tao_khe_duong || !settings.keo_dai_xuong">
+                <label class="switch-label" for="keo_dai_khe"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_khe_duong || (settings.keo_dai_xuong && settings.keo_dai_khe)) }">
+                <span>Tăng rộng</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('tang_rong_khe_duong', 0)"
+                            :disabled="!settings.tao_khe_duong || (settings.keo_dai_xuong && settings.keo_dai_khe)">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.tang_rong_khe_duong"
+                            @change="saveSetting('tang_rong_khe_duong')"
+                            @blur="validateNumber('tang_rong_khe_duong')"
+                            step="0.1"
+                            :disabled="!settings.tao_khe_duong || (settings.keo_dai_xuong && settings.keo_dai_khe)">
+                    <button class="spinner-btn" @click="incrementValue('tang_rong_khe_duong')"
+                            :disabled="!settings.tao_khe_duong || (settings.keo_dai_xuong && settings.keo_dai_khe)">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0) }">
+                <span>Tăng dày</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('tang_day_khe_duong')"
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.tang_day_khe_duong"
+                            @change="saveSetting('tang_day_khe_duong')"
+                            @blur="validateNumber('tang_day_khe_duong')"
+                            step="0.1"
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">
+                    <button class="spinner-btn" @click="incrementValue('tang_day_khe_duong')"
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_khe_duong }">
+                <span>Độ sâu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_sau_khe_duong')"
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.do_sau_khe_duong"
+                            @change="saveSetting('do_sau_khe_duong')"
+                            @blur="validateNumber('do_sau_khe_duong', 0)"
+                            step="0.1"
+                            min="0"
+                            :disabled="!settings.tao_khe_duong">
+                    <button class="spinner-btn" @click="incrementValue('do_sau_khe_duong')"
+                            :disabled="!settings.tao_khe_duong">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0) }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.instance_khe_duong"
+                            @input="saveSetting('instance_khe_duong')"
+                            :class="{ 'input-error': settings.instance_khe_duong && !settings.instance_khe_duong.startsWith('ABF_') }"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input
+                            type="text"
+                            v-model="settings.layer_khe_duong"
+                            @input="saveSetting('layer_khe_duong')"
+                            placeholder="Nhập tên..."
+                            :disabled="!settings.tao_khe_duong || settings.do_sau_khe_duong <= 0">
+                </div>
+            </div>
+        </div>
+        <small v-show="settings.tao_xuong_duong && settings.kieu_net_xe !== 'bao_nen'" class="switch-stacked-hint">Tạo khe dưỡng trên xương dưỡng.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Xóa khối tham chiếu</span>
+                <input type="checkbox" v-model="settings.xoa_khoi_tham_chieu"
+                       @change="saveSetting('xoa_khoi_tham_chieu')" id="xoa_khoi_tham_chieu">
+                <label class="switch-label" for="xoa_khoi_tham_chieu"></label>
+            </div>
+            <div class="switch">
+                <span>Nhóm khối kết quả</span>
+                <input type="checkbox" v-model="settings.nhom_khoi_ket_qua"
+                       @change="saveSetting('nhom_khoi_ket_qua')" id="nhom_khoi_ket_qua">
+                <label class="switch-label" for="nhom_khoi_ket_qua"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh sau khi hoàn thành tính toán.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('uon_cong')],
+        data: {
+            settings: {
+                do_nhay: 3,
+                do_day_van: 17.5,
+                instance_van: '',
+                layer_van: '',
+                duong_kinh_dao: 6,
+                thit_chua_lai: 10,
+                cach_mep: 2,
+                mo_rong_bien: 0,
+                tang_day_khe_duong: 0,
+                keo_dai_xuong: true,
+                kieu_net_xe: 'bao_nen',
+                do_day_lop_lot: 6,
+                xu_ly_bien: 'tran_vien',
+                layer_net_xe: 'ABF_XR',
+                layer_bao_ve: 'ABF_BV',
+                instance_net_xe: 'ABF_XR',
+                tao_duong_bao_ve: true,
+                instance_bao_ve: 'ABF_BV',
+                tao_xuong_duong: true,
+                so_luong_xuong: 3,
+                chieu_day_xuong: 17,
+                chieu_rong_xuong: 30,
+                mo_rong_xuong: 20,
+                do_sau_khe_duong: 16,
+                tao_khe_duong: true,
+                keo_dai_khe: true,
+                tang_rong_khe_duong: 10,
+                layer_khe_duong: 'ABF_KD',
+                instance_khe_duong: 'ABF_KD',
+                instance_xuong: '',
+                layer_xuong: '',
+                tao_lop_lot: true,
+                mo_phong_lop_lot: true,
+                mo_rong_bien_lop_lot: -5,
+                duong_kinh_dao_lop_lot: 6,
+                thit_chua_lai_lop_lot: 5,
+                thit_chua_hai_dau_lop_lot: 15,
+                instance_lop_lot: 'ABF_LL',
+                layer_lop_lot: 'ABF_LL',
+                hien_thi_xuong_duong: true,
+                xoa_khoi_tham_chieu: false,
+                nhom_khoi_ket_qua: false,
+            }
+        },
+        computed: {},
+        methods: {
+            onXuongKeoDaiChange() {
+                this.saveSetting('keo_dai_xuong');
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

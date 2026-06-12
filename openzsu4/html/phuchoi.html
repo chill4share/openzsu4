@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Sửa trục tọa độ</span>
+                <input type="checkbox" v-model="settings.sua_truc_toa_do"
+                       @change="saveSetting('sua_truc_toa_do')" id="sua_truc_toa_do">
+                <label class="switch-label" for="sua_truc_toa_do"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Căn chỉnh trục tọa độ của ván sau khi khôi phục.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Phục hồi hoàn toàn</span>
+                <input type="checkbox" v-model="settings.phuc_hoi_hoan_toan"
+                       @change="saveSetting('phuc_hoi_hoan_toan')" id="phuc_hoi_hoan_toan">
+                <label class="switch-label" for="phuc_hoi_hoan_toan"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.phuc_hoi_hoan_toan }">
+                <span>Xóa liên kết và tiết diện</span>
+                <input type="checkbox" v-model="settings.xoa_lien_ket_tiet_dien"
+                       @change="saveSetting('xoa_lien_ket_tiet_dien')" id="xoa_lien_ket_tiet_dien"
+                       :disabled="settings.phuc_hoi_hoan_toan">
+                <label class="switch-label" for="xoa_lien_ket_tiet_dien"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.phuc_hoi_hoan_toan }">
+                <span>Xóa mặt và nét thừa</span>
+                <input type="checkbox" v-model="settings.xoa_mat_net_thua"
+                       @change="saveSetting('xoa_mat_net_thua')" id="xoa_mat_net_thua"
+                       :disabled="settings.phuc_hoi_hoan_toan">
+                <label class="switch-label" for="xoa_mat_net_thua"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.phuc_hoi_hoan_toan }">
+                <span>Xóa cạnh ngắn hơn</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn"
+                            @click="decrementValue('do_dai_toi_thieu', 10)"
+                            :disabled="settings.do_dai_toi_thieu <= 0 || settings.phuc_hoi_hoan_toan">−
+                    </button>
+                    <input type="number" v-model.number="settings.do_dai_toi_thieu"
+                           @change="saveSetting('do_dai_toi_thieu')"
+                           @blur="validateDoDaiToiThieu"
+                           @keyup.enter="validateDoDaiToiThieu"
+                           :disabled="settings.phuc_hoi_hoan_toan"
+                           step="10" min="0" max="5000">
+                    <button class="spinner-btn"
+                            @click="incrementValue('do_dai_toi_thieu', 10)"
+                            :disabled="settings.do_dai_toi_thieu >= 5000 || settings.phuc_hoi_hoan_toan">+
+                    </button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Phục hồi hoàn toàn sẽ khôi phục về dạng hình ván hình hộp vuông nguyên bản.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('phuc_hoi')],
+        data: {
+            settings: {
+                sua_truc_toa_do: true,
+                phuc_hoi_hoan_toan: false,
+                xoa_lien_ket_tiet_dien: false,
+                xoa_mat_net_thua: false,
+                do_dai_toi_thieu: 50
+            },
+        },
+        methods: {
+            validateDoDaiToiThieu() {
+                let n = parseInt(this.settings.do_dai_toi_thieu, 10);
+                if (isNaN(n) || n < 0) n = 0;
+                if (n > 5000) n = 5000;
+                this.settings.do_dai_toi_thieu = n;
+                this.saveSetting('do_dai_toi_thieu');
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

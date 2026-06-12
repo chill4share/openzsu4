@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tính theo không gian</span>
+                <input type="checkbox" v-model="settings.tinh_theo_khong_gian"
+                       @change="saveSetting('tinh_theo_khong_gian')" id="tinh_theo_khong_gian">
+                <label class="switch-label" for="tinh_theo_khong_gian"></label>
+            </div>
+            <div class="switch" v-show="settings.tinh_theo_khong_gian">
+                <span>Chọn mặt mở rộng</span>
+                <input type="checkbox" v-model="settings.chon_mat_mo_rong"
+                       @change="saveSetting('chon_mat_mo_rong')" id="chon_mat_mo_rong">
+                <label class="switch-label" for="chon_mat_mo_rong"></label>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Tính giao cắt với các ván khác khi xác định mặt.</p>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Dùng độ dày của ván gốc làm độ dày của các ván được tạo ra.">
+                <span>Độ dày tự động</span>
+                <input type="checkbox" v-model="settings.do_day_tu_dong" @change="saveSetting('do_day_tu_dong')"
+                       id="do_day_tu_dong">
+                <label class="switch-label" for="do_day_tu_dong"></label>
+            </div>
+            <div class="switch" title="Độ dày của ván được tạo ra." v-show="!settings.do_day_tu_dong">
+                <span>Độ dày ván</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day')">−</button>
+                    <input type="number"
+                           v-model.number="settings.do_day"
+                           @change="saveSetting('do_day')"
+                           @blur="validateNumber('do_day')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('do_day')">+</button>
+                </div>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Khi kích hoạt độ dày tự động, các ván được tạo ra sẽ có độ dày giống với độ dày của ván gốc.</p>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Các ván mới được tạo sẽ trở thành component với nhau.">
+                <span>Tạo component</span>
+                <input type="checkbox" v-model="settings.tao_component" @change="saveSetting('tao_component')"
+                       id="tao_component">
+                <label class="switch-label" for="tao_component"></label>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Các ván được tạo sẽ trở thành component với nhau.</p>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Tạo ván ngay sau khi nhấn Enter.">
+                <span>Bỏ qua xem trước</span>
+                <input type="checkbox" v-model="settings.bo_qua_xem_truoc" @change="saveSetting('bo_qua_xem_truoc')"
+                       id="bo_qua_xem_truoc">
+                <label class="switch-label" for="bo_qua_xem_truoc"></label>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Khi chia không gian, cho phép tạo ván ngay khi nhập khoảng cách hoặc số ván, bỏ qua hình xem trước.</p>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Instance của các ván được tạo ra. Không bắt đầu bằng 'ABF_'.">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance"
+                           @input="saveSetting('instance')"
+                           :class="{ 'input-error': settings.instance && settings.instance.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" title="Layer của các ván được tạo ra. Không bắt đầu bằng 'ABF_'.">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer"
+                           @input="saveSetting('layer')"
+                           :class="{ 'input-error': settings.layer && settings.layer.startsWith('ABF_') }"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Không nên đặt tên instance và layer bắt đầu bằng 'ABF_' để tránh lỗi khi dán cạnh bằng ABF.</p>
+
+        <div class="switch-stacked">
+            <div class="switch" title="Tạo ván từ những mặt đang chọn ngay khi kích hoạt công cụ.">
+                <span>Tạo ván nhanh</span>
+                <input type="checkbox" v-model="settings.tao_van_nhanh"
+                       @change="saveSetting('tao_van_nhanh')" id="tao_van_nhanh">
+                <label class="switch-label" for="tao_van_nhanh"></label>
+            </div>
+            <div class="switch" v-show="settings.tao_van_nhanh">
+                <span>Gộp đồng phẳng</span>
+                <input type="checkbox" v-model="settings.gop_dong_phang"
+                       @change="saveSetting('gop_dong_phang')" id="gop_dong_phang">
+                <label class="switch-label" for="gop_dong_phang"></label>
+            </div>
+            <div class="switch" v-show="settings.tao_van_nhanh">
+                <span>Mở rộng biên</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('mo_rong_bien')">−</button>
+                    <input type="number"
+                           v-model.number="settings.mo_rong_bien"
+                           @change="saveSetting('mo_rong_bien')"
+                           @blur="validateNumber('mo_rong_bien')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('mo_rong_bien')">+</button>
+                </div>
+            </div>
+            <div class="switch" v-show="settings.tao_van_nhanh">
+                <span>Độ dày ván</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day_nhanh')">−</button>
+                    <input type="number"
+                           v-model.number="settings.do_day_nhanh"
+                           @change="saveSetting('do_day_nhanh')"
+                           @blur="validateNumber('do_day_nhanh')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('do_day_nhanh')">+</button>
+                </div>
+            </div>
+        </div>
+        <p class="switch-stacked-hint">Tạo ván từ những mặt đang chọn ngay khi kích hoạt công cụ.</p>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('tao_van')],
+        data: {
+            settings: {
+                tinh_theo_khong_gian: true,
+                chon_mat_mo_rong: true,
+                tao_van_nhanh: false,
+                gop_dong_phang: false,
+                mo_rong_bien: 0.0,
+                do_day_nhanh: 17.5,
+                tao_component: false,
+                do_day_tu_dong: true,
+                bo_qua_xem_truoc: false,
+                do_day: 17.5,
+                instance: '',
+                layer: ''
+            }
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

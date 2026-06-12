@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt Liên Kết Ngang</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+
+    <div class="col2">
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Thống kê liên kết</span>
+                <input type="checkbox" v-model="settings.thong_ke_lien_ket"
+                       @change="saveSetting('thong_ke_lien_ket')" id="thong_ke_lien_ket">
+                <label class="switch-label" for="thong_ke_lien_ket"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.thong_ke_lien_ket }">
+                <span>Tên hiển thị</span>
+                <div class="text-input-group">
+                    <input :disabled="!settings.thong_ke_lien_ket" type="text" v-model="settings.ten_hien_thi"
+                           @input="saveSetting('ten_hien_thi')"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Thêm thuộc tính thống kê cho liên kết.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Số lượng cố định</span>
+                <input type="checkbox" v-model="settings.so_luong_co_dinh"
+                       @change="saveSetting('so_luong_co_dinh')" id="so_luong_co_dinh">
+                <label class="switch-label" for="so_luong_co_dinh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.so_luong_co_dinh }">
+                <span>Số lượng liên kết</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementInt('so_luong_lien_ket')"
+                            :disabled="settings.so_luong_lien_ket <= 1 || !settings.so_luong_co_dinh">−
+                    </button>
+                    <input type="number" v-model.number="settings.so_luong_lien_ket"
+                           @change="saveSetting('so_luong_lien_ket')"
+                           @blur="validateInt('so_luong_lien_ket')"
+                           @keyup.enter="validateInt('so_luong_lien_ket')"
+                           :disabled="!settings.so_luong_co_dinh"
+                           step="1" min="1">
+                    <button class="spinner-btn" @click="incrementInt('so_luong_lien_ket')"
+                            :disabled="!settings.so_luong_co_dinh">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.so_luong_co_dinh }">
+                <span>Khoảng cách</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('khoang_cach')"
+                            :disabled="settings.so_luong_co_dinh">−
+                    </button>
+                    <input type="number" v-model.number="settings.khoang_cach"
+                           @change="saveSetting('khoang_cach')"
+                           @blur="validateNumber('khoang_cach')"
+                           :disabled="settings.so_luong_co_dinh"
+                           step="1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('khoang_cach')"
+                            :disabled="settings.so_luong_co_dinh">+
+                    </button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khi tắt số lượng cố định, liên kết sẽ được chia số lượng tự động theo khoảng cách giữa các tâm liên kết.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cách đều hai đầu</span>
+                <input type="checkbox" v-model="settings.cach_deu_hai_dau"
+                       @change="saveSetting('cach_deu_hai_dau')" id="cach_deu_hai_dau">
+                <label class="switch-label" for="cach_deu_hai_dau"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && settings.so_luong_co_dinh && settings.so_luong_lien_ket === 1 && settings.cach_deu_hai_dau }">
+                <span>{{ settings.cach_deu_hai_dau ? 'Cách hai đầu' : 'Cách trước' }}</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_truoc')">−</button>
+                    <input type="number" v-model.number="settings.cach_truoc" @change="saveSetting('cach_truoc')"
+                           @blur="validateNumber('cach_truoc')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_truoc')">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (settings.cach_deu_hai_dau || (settings.so_luong_co_dinh && settings.so_luong_lien_ket === 1)) }">
+                <span>Cách sau</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_sau')">−</button>
+                    <input type="number" v-model.number="settings.cach_sau" @change="saveSetting('cach_sau')"
+                           @blur="validateNumber('cach_sau')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('cach_sau')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khoảng cách từ tâm liên kết đến hai đầu cạnh.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Ván dày tối thiểu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('van_day_toi_thieu')"
+                            :disabled="settings.van_day_toi_thieu <= 0">−
+                    </button>
+                    <input type="number" v-model.number="settings.van_day_toi_thieu"
+                           @change="saveSetting('van_day_toi_thieu')"
+                           @blur="validateNumber('van_day_toi_thieu')"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('van_day_toi_thieu')">+</button>
+                </div>
+            </div>
+            <div class="switch">
+                <span>Cạnh dài tối thiểu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('canh_dai_toi_thieu')"
+                            :disabled="settings.canh_dai_toi_thieu <= 0">−
+                    </button>
+                    <input type="number" v-model.number="settings.canh_dai_toi_thieu"
+                           @change="saveSetting('canh_dai_toi_thieu')"
+                           @blur="validateNumber('canh_dai_toi_thieu')"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('canh_dai_toi_thieu')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Điều kiện tạo liên kết. Đặt bằng 0 để tắt.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo chốt chính</span>
+                <input type="checkbox" v-model="settings.tao_chot_chinh"
+                       @change="saveSetting('tao_chot_chinh')" id="tao_chot_chinh">
+                <label class="switch-label" for="tao_chot_chinh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_chinh }">
+                <span>Tiết diện tùy chỉnh</span>
+                <input type="checkbox" v-model="settings.tiet_dien_tuy_chinh_cc"
+                       @change="onTietDienChange('tiet_dien_tuy_chinh_cc', 'duong_dan_chot_chinh')" id="tiet_dien_tuy_chinh_cc"
+                       :disabled="!settings.tao_chot_chinh">
+                <label class="switch-label" for="tiet_dien_tuy_chinh_cc"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || !settings.tiet_dien_tuy_chinh_cc) }">
+                <span>File tùy chỉnh</span>
+                <div class="text-input-group">
+                    <button class="file-pick-btn" @click="pickFile('tiet_dien_tuy_chinh_cc', 'duong_dan_chot_chinh')"
+                            :disabled="!settings.tao_chot_chinh"
+                            :class="{ 'input-error': fileErrors.duong_dan_chot_chinh }">
+                        {{ fileName(settings.duong_dan_chot_chinh) }}
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || !settings.tiet_dien_tuy_chinh_cc) }">
+                <span>Tâm căn giữa</span>
+                <input type="checkbox" v-model="settings.tam_can_giua_cc"
+                       @change="saveSetting('tam_can_giua_cc')" id="tam_can_giua_cc"
+                       :disabled="!settings.tao_chot_chinh">
+                <label class="switch-label" for="tam_can_giua_cc"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || !settings.tiet_dien_tuy_chinh_cc) }">
+                <span>Góc xoay</span>
+                <div class="select-group">
+                    <select v-model.number="settings.goc_xoay_cc" @change="saveSetting('goc_xoay_cc')"
+                            :disabled="!settings.tao_chot_chinh">
+                        <option :value="0">0°</option>
+                        <option :value="90">90°</option>
+                        <option :value="180">180°</option>
+                        <option :value="270">270°</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_chinh }">
+                <span>Căn giữa thân ván</span>
+                <input type="checkbox" v-model="settings.can_giua_chot_chinh"
+                       @change="saveSetting('can_giua_chot_chinh')" id="can_giua_chot_chinh"
+                       :disabled="!settings.tao_chot_chinh">
+                <label class="switch-label" for="can_giua_chot_chinh"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || settings.can_giua_chot_chinh) }">
+                <span>Cách mặt</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chot_chinh_cach_mat')"
+                            :disabled="!settings.tao_chot_chinh || settings.can_giua_chot_chinh">−</button>
+                    <input type="number" v-model.number="settings.chot_chinh_cach_mat"
+                           @change="saveSetting('chot_chinh_cach_mat')"
+                           @blur="validateNumber('chot_chinh_cach_mat')"
+                           :disabled="!settings.tao_chot_chinh || settings.can_giua_chot_chinh"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('chot_chinh_cach_mat')"
+                            :disabled="!settings.tao_chot_chinh || settings.can_giua_chot_chinh">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc) }">
+                <span>Đường kính lỗ</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_lo_chot')"
+                            :disabled="!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc">−</button>
+                    <input type="number" v-model.number="settings.duong_kinh_lo_chot"
+                           @change="saveSetting('duong_kinh_lo_chot')"
+                           @blur="validateNumber('duong_kinh_lo_chot')"
+                           :disabled="!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_lo_chot')"
+                            :disabled="!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc) }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_chot_chinh"
+                           @input="saveSetting('instance_chot_chinh')"
+                           :class="{ 'input-error': settings.instance_chot_chinh && !settings.instance_chot_chinh.startsWith('ABF_') }"
+                           :disabled="!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_chot_chinh"
+                           @input="saveSetting('layer_chot_chinh')"
+                           :disabled="!settings.tao_chot_chinh || settings.tiet_dien_tuy_chinh_cc"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_chinh }">
+                <span>Mô phỏng</span>
+                <input type="checkbox" v-model="settings.mo_phong_khoan_ngang"
+                       @change="saveSetting('mo_phong_khoan_ngang')" id="mo_phong_khoan_ngang"
+                       :disabled="!settings.tao_chot_chinh">
+                <label class="switch-label" for="mo_phong_khoan_ngang"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang) }">
+                <span>Chiều sâu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_sau_mo_phong')"
+                            :disabled="!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang">−</button>
+                    <input type="number" v-model.number="settings.chieu_sau_mo_phong"
+                           @change="saveSetting('chieu_sau_mo_phong')"
+                           @blur="validateNumber('chieu_sau_mo_phong')"
+                           :disabled="!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('chieu_sau_mo_phong')"
+                            :disabled="!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_khoan_ngang"
+                           @input="saveSetting('layer_khoan_ngang')"
+                           :disabled="!settings.tao_chot_chinh || !settings.mo_phong_khoan_ngang"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh chốt chính.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo chốt phụ</span>
+                <input type="checkbox" v-model="settings.tao_chot_phu"
+                       @change="saveSetting('tao_chot_phu')" id="tao_chot_phu">
+                <label class="switch-label" for="tao_chot_phu"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_phu }">
+                <span>Tiết diện tùy chỉnh</span>
+                <input type="checkbox" v-model="settings.tiet_dien_tuy_chinh_cp"
+                       @change="onTietDienChange('tiet_dien_tuy_chinh_cp', 'duong_dan_chot_phu')" id="tiet_dien_tuy_chinh_cp"
+                       :disabled="!settings.tao_chot_phu">
+                <label class="switch-label" for="tiet_dien_tuy_chinh_cp"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || !settings.tiet_dien_tuy_chinh_cp) }">
+                <span>File tùy chỉnh</span>
+                <div class="text-input-group">
+                    <button class="file-pick-btn" @click="pickFile('tiet_dien_tuy_chinh_cp', 'duong_dan_chot_phu')"
+                            :disabled="!settings.tao_chot_phu"
+                            :class="{ 'input-error': fileErrors.duong_dan_chot_phu }">
+                        {{ fileName(settings.duong_dan_chot_phu) }}
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || !settings.tiet_dien_tuy_chinh_cp) }">
+                <span>Tâm căn giữa</span>
+                <input type="checkbox" v-model="settings.tam_can_giua_cp"
+                       @change="saveSetting('tam_can_giua_cp')" id="tam_can_giua_cp"
+                       :disabled="!settings.tao_chot_phu">
+                <label class="switch-label" for="tam_can_giua_cp"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || !settings.tiet_dien_tuy_chinh_cp) }">
+                <span>Góc xoay</span>
+                <div class="select-group">
+                    <select v-model.number="settings.goc_xoay_cp" @change="saveSetting('goc_xoay_cp')"
+                            :disabled="!settings.tao_chot_phu">
+                        <option :value="0">0°</option>
+                        <option :value="90">90°</option>
+                        <option :value="180">180°</option>
+                        <option :value="270">270°</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_phu }">
+                <span>Căn giữa thân ván</span>
+                <input type="checkbox" v-model="settings.can_giua_chot_phu"
+                       @change="saveSetting('can_giua_chot_phu')" id="can_giua_chot_phu"
+                       :disabled="!settings.tao_chot_phu">
+                <label class="switch-label" for="can_giua_chot_phu"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || settings.can_giua_chot_phu) }">
+                <span>Cách mặt</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chot_phu_cach_mat')"
+                            :disabled="!settings.tao_chot_phu || settings.can_giua_chot_phu">−</button>
+                    <input type="number" v-model.number="settings.chot_phu_cach_mat"
+                           @change="saveSetting('chot_phu_cach_mat')"
+                           @blur="validateNumber('chot_phu_cach_mat')"
+                           :disabled="!settings.tao_chot_phu || settings.can_giua_chot_phu"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('chot_phu_cach_mat')"
+                            :disabled="!settings.tao_chot_phu || settings.can_giua_chot_phu">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp) }">
+                <span>Đường kính lỗ</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_chot_phu')"
+                            :disabled="!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp">−
+                    </button>
+                    <input type="number" v-model.number="settings.duong_kinh_chot_phu"
+                           @change="saveSetting('duong_kinh_chot_phu')" @blur="validateNumber('duong_kinh_chot_phu')"
+                           :disabled="!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_chot_phu')"
+                            :disabled="!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch"
+                 :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || settings.huong_chot_phu === 'chinh_giua') }">
+                <span>Cách chốt chính</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chot_phu_cach_chot_chinh')"
+                            :disabled="!settings.tao_chot_phu || settings.huong_chot_phu === 'chinh_giua'">−
+                    </button>
+                    <input type="number" v-model.number="settings.chot_phu_cach_chot_chinh"
+                           @change="saveSetting('chot_phu_cach_chot_chinh')"
+                           @blur="validateNumber('chot_phu_cach_chot_chinh')"
+                           :disabled="!settings.tao_chot_phu || settings.huong_chot_phu === 'chinh_giua'"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('chot_phu_cach_chot_chinh')"
+                            :disabled="!settings.tao_chot_phu || settings.huong_chot_phu === 'chinh_giua'">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_phu }">
+                <span>Hướng chốt</span>
+                <div class="select-group">
+                    <select v-model="settings.huong_chot_phu" @change="saveSetting('huong_chot_phu')"
+                            :disabled="!settings.tao_chot_phu">
+                        <option value="ngoai">Ngoài</option>
+                        <option value="trong">Trong</option>
+                        <option value="chinh_giua">Giữa</option>
+                        <option value="hai_ben">Hai bên</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp) }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_chot_phu" @input="saveSetting('instance_chot_phu')"
+                           :class="{ 'input-error': settings.instance_chot_phu && !settings.instance_chot_phu.startsWith('ABF_') }"
+                           :disabled="!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_chot_phu" @input="saveSetting('layer_chot_phu')"
+                           :disabled="!settings.tao_chot_phu || settings.tiet_dien_tuy_chinh_cp"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_chot_phu }">
+                <span>Mô phỏng</span>
+                <input type="checkbox" v-model="settings.mo_phong_cp"
+                       @change="saveSetting('mo_phong_cp')" id="mo_phong_cp"
+                       :disabled="!settings.tao_chot_phu">
+                <label class="switch-label" for="mo_phong_cp"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || !settings.mo_phong_cp) }">
+                <span>Chiều sâu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('chieu_sau_mo_phong_cp')"
+                            :disabled="!settings.tao_chot_phu || !settings.mo_phong_cp">−</button>
+                    <input type="number" v-model.number="settings.chieu_sau_mo_phong_cp"
+                           @change="saveSetting('chieu_sau_mo_phong_cp')"
+                           @blur="validateNumber('chieu_sau_mo_phong_cp')"
+                           :disabled="!settings.tao_chot_phu || !settings.mo_phong_cp"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('chieu_sau_mo_phong_cp')"
+                            :disabled="!settings.tao_chot_phu || !settings.mo_phong_cp">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_chot_phu || !settings.mo_phong_cp) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_mo_phong_cp"
+                           @input="saveSetting('layer_mo_phong_cp')"
+                           :disabled="!settings.tao_chot_phu || !settings.mo_phong_cp"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh chốt phụ.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tạo ốc khóa</span>
+                <input type="checkbox" v-model="settings.tao_oc_khoa"
+                       @change="saveSetting('tao_oc_khoa')" id="tao_oc_khoa">
+                <label class="switch-label" for="tao_oc_khoa"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_oc_khoa }">
+                <span>Tiết diện tùy chỉnh</span>
+                <input type="checkbox" v-model="settings.tiet_dien_tuy_chinh_khoa"
+                       @change="onTietDienChange('tiet_dien_tuy_chinh_khoa', 'duong_dan_khoa')" id="tiet_dien_tuy_chinh_khoa"
+                       :disabled="!settings.tao_oc_khoa">
+                <label class="switch-label" for="tiet_dien_tuy_chinh_khoa"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || !settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>File tùy chỉnh</span>
+                <div class="text-input-group">
+                    <button class="file-pick-btn" @click="pickFile('tiet_dien_tuy_chinh_khoa', 'duong_dan_khoa')"
+                            :disabled="!settings.tao_oc_khoa"
+                            :class="{ 'input-error': fileErrors.duong_dan_khoa }">
+                        {{ fileName(settings.duong_dan_khoa) }}
+                    </button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || !settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>Tâm căn giữa</span>
+                <input type="checkbox" v-model="settings.tam_can_giua_khoa"
+                       @change="saveSetting('tam_can_giua_khoa')" id="tam_can_giua_khoa"
+                       :disabled="!settings.tao_oc_khoa">
+                <label class="switch-label" for="tam_can_giua_khoa"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || !settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>Góc xoay</span>
+                <div class="select-group">
+                    <select v-model.number="settings.goc_xoay_khoa" @change="saveSetting('goc_xoay_khoa')"
+                            :disabled="!settings.tao_oc_khoa">
+                        <option :value="0">0°</option>
+                        <option :value="90">90°</option>
+                        <option :value="180">180°</option>
+                        <option :value="270">270°</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>Đường kính lỗ</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_lo_khoa')"
+                            :disabled="!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa">−</button>
+                    <input type="number" v-model.number="settings.duong_kinh_lo_khoa"
+                           @change="saveSetting('duong_kinh_lo_khoa')"
+                           @blur="validateNumber('duong_kinh_lo_khoa')"
+                           :disabled="!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_lo_khoa')"
+                            :disabled="!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.tao_oc_khoa }">
+                <span>Cách mép</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('cach_mep_oc_khoa')"
+                            :disabled="!settings.tao_oc_khoa">−</button>
+                    <input type="number" v-model.number="settings.cach_mep_oc_khoa"
+                           @change="saveSetting('cach_mep_oc_khoa')"
+                           @blur="validateNumber('cach_mep_oc_khoa')"
+                           :disabled="!settings.tao_oc_khoa"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('cach_mep_oc_khoa')"
+                            :disabled="!settings.tao_oc_khoa">+</button>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_oc_khoa"
+                           @input="saveSetting('instance_oc_khoa')"
+                           :class="{ 'input-error': settings.instance_oc_khoa && !settings.instance_oc_khoa.startsWith('ABF_') }"
+                           :disabled="!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && (!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa) }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_oc_khoa"
+                           @input="saveSetting('layer_oc_khoa')"
+                           :disabled="!settings.tao_oc_khoa || settings.tiet_dien_tuy_chinh_khoa"
+                           placeholder="Nhập tên...">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh ốc khóa.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Hiển thị khoảng cách</span>
+                <input type="checkbox" v-model="settings.hien_thi_khoang_cach"
+                       @change="saveSetting('hien_thi_khoang_cach')" id="hien_thi_khoang_cach">
+                <label class="switch-label" for="hien_thi_khoang_cach"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tùy chỉnh hình xem trước.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    Vue.config.productionTip = false;
+    Vue.config.devtools = false;
+    document.body.spellcheck = false;
+
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('lien_ket')],
+        data: {
+            fileErrors: {},
+            settings: {
+                so_luong_co_dinh: true,
+                so_luong_lien_ket: 2,
+                khoang_cach: 200,
+                cach_deu_hai_dau: true,
+                cach_truoc: 50,
+                cach_sau: 50,
+                van_day_toi_thieu: 15,
+                canh_dai_toi_thieu: 50,
+                tao_chot_chinh: true,
+                tiet_dien_tuy_chinh_cc: false,
+                duong_dan_chot_chinh: "",
+                tam_can_giua_cc: true,
+                goc_xoay_cc: 0,
+                can_giua_chot_chinh: false,
+                duong_kinh_lo_chot: 5,
+                chot_chinh_cach_mat: 7,
+                instance_chot_chinh: "ABF_CC",
+                layer_chot_chinh: "ABF_CC",
+                tao_chot_phu: true,
+                tiet_dien_tuy_chinh_cp: false,
+                duong_dan_chot_phu: "",
+                tam_can_giua_cp: true,
+                goc_xoay_cp: 0,
+                can_giua_chot_phu: true,
+                chot_phu_cach_mat: 7,
+                huong_chot_phu: "trong",
+                duong_kinh_chot_phu: 8,
+                chot_phu_cach_chot_chinh: 35,
+                layer_chot_phu: "ABF_CC",
+                instance_chot_phu: "ABF_CC",
+                tao_oc_khoa: true,
+                tiet_dien_tuy_chinh_khoa: false,
+                duong_dan_khoa: "",
+                tam_can_giua_khoa: true,
+                goc_xoay_khoa: 0,
+                duong_kinh_lo_khoa: 15,
+                cach_mep_oc_khoa: 35,
+                instance_oc_khoa: "ABF_OK",
+                layer_oc_khoa: "ABF_OK",
+                mo_phong_khoan_ngang: false,
+                chieu_sau_mo_phong: 35,
+                layer_khoan_ngang: "ABF_KN",
+                mo_phong_cp: false,
+                chieu_sau_mo_phong_cp: 35,
+                layer_mo_phong_cp: "ABF_KN",
+                hien_thi_khoang_cach: false,
+                thong_ke_lien_ket: true,
+                ten_hien_thi: "Liên kết",
+            }
+        },
+        computed: {},
+        created() {
+            var self = this;
+            var _loadSettings = this.loadSettings;
+            var _applyPreset = this.applyPresetSettings;
+            this.loadSettings = function(data) {
+                _loadSettings.call(self, data);
+                self.applyFileChecks(data);
+            };
+            this.applyPresetSettings = function(data) {
+                _applyPreset.call(self, data);
+                self.applyFileChecks(data);
+            };
+        },
+        methods: {
+            applyFileChecks(data) {
+                var checks = data._file_checks || {};
+                var keys = ['duong_dan_chot_chinh', 'duong_dan_chot_phu', 'duong_dan_khoa'];
+                for (var i = 0; i < keys.length; i++) {
+                    var key = keys[i];
+                    this.$set(this.fileErrors, key, checks.hasOwnProperty(key) && !checks[key]);
+                }
+            },
+            onTietDienChange(shapeKey, pathKey) {
+                this.saveSetting(shapeKey);
+                if (this.settings[shapeKey] && !this.settings[pathKey]) {
+                    this.pickFile(shapeKey, pathKey);
+                }
+            },
+            fileName(path) {
+                if (!path) return '';
+                var parts = path.replace(/\\/g, '/').split('/');
+                return parts[parts.length - 1] || 'Chọn file...';
+            },
+            pickFile(shapeKey, pathKey) {
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        action: 'pick_file',
+                        tabId: 'lien_ket',
+                        shapeKey: shapeKey,
+                        pathKey: pathKey
+                    }, '*');
+                }
+            }
+        },
+        mounted() {
+            var self = this;
+            window.addEventListener('message', function (event) {
+                if (event.data && event.data.action === 'file_picked') {
+                    var pathKey = event.data.pathKey;
+                    var shapeKey = event.data.shapeKey;
+                    if (event.data.path) {
+                        self.$set(self.settings, pathKey, event.data.path);
+                        self.saveSetting(pathKey);
+                        self.$set(self.fileErrors, pathKey, false);
+                    } else if (self.settings[pathKey] === '') {
+                        self.$set(self.settings, shapeKey, false);
+                        self.saveSetting(shapeKey);
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

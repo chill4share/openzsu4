@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Bo góc tự do</span>
+                <input type="checkbox" v-model="settings.bo_goc_tu_do"
+                       @change="saveSetting('bo_goc_tu_do')" id="bo_goc_tu_do">
+                <label class="switch-label" for="bo_goc_tu_do"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Cho phép bo góc theo tất cả các hướng.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Kiểu bo góc</span>
+                <div class="select-group">
+                    <select v-model="settings.kieu_bo_goc" @change="saveSetting('kieu_bo_goc')">
+                        <option value="loi">Cung lồi</option>
+                        <option value="lom">Cung lõm</option>
+                        <option value="cheo">Vát chéo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch">
+                <span>{{ settings.kieu_bo_goc === 'cheo' ? 'Khoảng cách' : 'Bán kính' }}</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('ban_kinh')">−</button>
+                    <input type="number" v-model.number="settings.ban_kinh"
+                           @change="saveSetting('ban_kinh')"
+                           @blur="validateNumber('ban_kinh')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('ban_kinh')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Kiểu và kích thước bo góc.</small>
+
+        <div class="switch-stacked" v-show="settings.kieu_bo_goc !== 'cheo'">
+            <div class="switch">
+                <span>Độ mịn tự động</span>
+                <input type="checkbox" v-model="settings.do_min_tu_dong"
+                       @change="saveSetting('do_min_tu_dong')" id="do_min_tu_dong">
+                <label class="switch-label" for="do_min_tu_dong"></label>
+            </div>
+            <div class="switch" v-show="settings.do_min_tu_dong">
+                <span>Cấp độ mịn</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn"
+                            @click="decrementInt('cap_do_min')"
+                            :disabled="!settings.do_min_tu_dong || settings.cap_do_min <= 1">−
+                    </button>
+                    <input type="number" v-model.number="settings.cap_do_min"
+                           @change="validateCapDoMin"
+                           @blur="validateCapDoMin"
+                           @keyup.enter="validateCapDoMin"
+                           :disabled="!settings.do_min_tu_dong"
+                           step="1" min="1">
+                    <button class="spinner-btn"
+                            @click="incrementInt('cap_do_min')"
+                            :disabled="!settings.do_min_tu_dong || settings.cap_do_min >= 10">+
+                    </button>
+                </div>
+            </div>
+            <div class="switch" v-show="!settings.do_min_tu_dong">
+                <span>Số cạnh</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn"
+                            @click="decrementInt('so_canh')"
+                            :disabled="settings.do_min_tu_dong || settings.so_canh <= 3">−
+                    </button>
+                    <input type="number" v-model.number="settings.so_canh"
+                           @change="saveSetting('so_canh')"
+                           @blur="validateSegment"
+                           @keyup.enter="validateSegment"
+                           :disabled="settings.do_min_tu_dong"
+                           step="1" min="3" max="240">
+                    <button class="spinner-btn"
+                            @click="incrementInt('so_canh')"
+                            :disabled="settings.do_min_tu_dong || settings.so_canh >= 240">+
+                    </button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Độ mịn tự động sẽ tính số cạnh dựa trên bán kính và cấp độ mịn người dùng chọn thay vì số cạnh cố định.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('bo_goc')],
+        data: {
+            settings: {
+                bo_goc_tu_do: false,
+                do_min_tu_dong: true,
+                cap_do_min: 7,
+                kieu_bo_goc: "loi",
+                ban_kinh: 100,
+                so_canh: 24
+            }
+        },
+        methods: {
+            selectSmoothness(value) {
+                if (!this.settings.do_min_tu_dong) return;
+                this.settings.cap_do_min = value;
+                this.saveSetting('cap_do_min');
+            },
+            validateCapDoMin() {
+                let n = parseInt(this.settings.cap_do_min, 10);
+                if (isNaN(n) || n < 1) n = 1;
+                if (n > 10) n = 10;
+                this.settings.cap_do_min = n;
+                this.saveSetting('cap_do_min');
+            },
+            validateSegment() {
+                let n = parseInt(this.settings.so_canh, 10);
+                if (isNaN(n) || n < 3) n = 3;
+                if (n > 240) n = 240;
+                this.settings.so_canh = n;
+                this.saveSetting('so_canh');
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

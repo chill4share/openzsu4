@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Đảo thứ tự chọn</span>
+                <input type="checkbox" v-model="settings.dao_thu_tu"
+                       @change="saveSetting('dao_thu_tu')" id="dao_thu_tu">
+                <label class="switch-label" for="dao_thu_tu"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khi bật đảo thứ tự, chọn ván bị khấu trước, dao khấu sau.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Kích hoạt khử dao</span>
+                <input type="checkbox" v-model="settings.kich_hoat_khu_dao"
+                       @change="saveSetting('kich_hoat_khu_dao')" id="kich_hoat_khu_dao">
+                <label class="switch-label" for="kich_hoat_khu_dao"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khử dao tự động kích hoạt sau khi khấu.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Khấu thêm</span>
+                <input type="checkbox" v-model="settings.khau_them"
+                       @change="saveSetting('khau_them')" id="khau_them">
+                <label class="switch-label" for="khau_them"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khau_them }">
+                <span>Kiểu khấu thêm</span>
+                <div class="select-group">
+                    <select v-model="settings.kieu_khau_them" @change="saveSetting('kieu_khau_them')"
+                            :disabled="!settings.khau_them">
+                        <option value="tat_ca">Tất cả</option>
+                        <option value="tiet_dien">Tiết diện</option>
+                        <option value="chieu_day">Chiều dày</option>
+                    </select>
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.khau_them }">
+                <span>Giá trị khấu thêm</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('gia_tri_khau_them')"
+                            :disabled="settings.gia_tri_khau_them <= 0 || !settings.khau_them">−
+                    </button>
+                    <input
+                            type="number"
+                            v-model.number="settings.gia_tri_khau_them"
+                            @change="saveSetting('gia_tri_khau_them')"
+                            @blur="validateNumber('gia_tri_khau_them')"
+                            :disabled="!settings.khau_them"
+                            step="0.1"
+                            min="0">
+                    <button class="spinner-btn" @click="incrementValue('gia_tri_khau_them')"
+                            :disabled="!settings.khau_them">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khấu thêm một khoảng so với vị trí tiếp giáp.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tự động tách khối</span>
+                <input type="checkbox" v-model="settings.tu_dong_tach_khoi"
+                       @change="saveSetting('tu_dong_tach_khoi')" id="tu_dong_tach_khoi">
+                <label class="switch-label" for="tu_dong_tach_khoi"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tự động tách khối khi ván bị cắt rời.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Màu dao khấu</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_dao_khau_hex" @input="saveColor('mau_dao_khau')">
+                </div>
+            </div>
+            <div class="switch">
+                <span>Màu bị khấu</span>
+                <div class="color-input-group">
+                    <input type="color" v-model="mau_bi_khau_hex" @input="saveColor('mau_bi_khau')">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Màu hiển thị khi chọn đối tượng.</small>
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('khau_van')],
+        data: {
+            settings: {
+                kich_hoat_khu_dao: false,
+                dao_thu_tu: true,
+                khau_them: false,
+                gia_tri_khau_them: 0,
+                kieu_khau_them: "tat_ca",
+                tu_dong_tach_khoi: true,
+                mau_dao_khau: [60, 175, 214],
+                mau_bi_khau: [210, 117, 159]
+            }
+        },
+        computed: {
+            mau_dao_khau_hex: colorComputed('mau_dao_khau'),
+            mau_bi_khau_hex: colorComputed('mau_bi_khau')
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Sử dụng tiết diện</span>
+                <input type="checkbox" v-model="settings.su_dung_tiet_dien"
+                       @change="saveSetting('su_dung_tiet_dien')" id="su_dung_tiet_dien">
+                <label class="switch-label" for="su_dung_tiet_dien"></label>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.su_dung_tiet_dien }">
+                <span>Instance</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.instance_khu"
+                           @input="saveSetting('instance_khu')"
+                           :class="{ 'input-error': settings.instance_khu && !settings.instance_khu.startsWith('ABF_') }"
+                           placeholder="Nhập tên..."
+                           :disabled="!settings.su_dung_tiet_dien">
+                </div>
+            </div>
+            <div class="switch" :class="{ collapsed: hideUnavailable && !settings.su_dung_tiet_dien }">
+                <span>Layer</span>
+                <div class="text-input-group">
+                    <input type="text" v-model="settings.layer_khu"
+                           @input="saveSetting('layer_khu')"
+                           placeholder="Nhập tên..."
+                           :disabled="!settings.su_dung_tiet_dien">
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Khi bật, khử dao bằng cách tạo lỗ khoan tiết diện trước khi cắt ván. Khi tắt, khử dao cùng lúc với cắt ván.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Tiết diện vuông</span>
+                <input type="checkbox" v-model="settings.tiet_dien_vuong"
+                       @change="saveSetting('tiet_dien_vuong')" id="tiet_dien_vuong">
+                <label class="switch-label" for="tiet_dien_vuong"></label>
+            </div>
+            <div class="switch">
+                <span>Đường kính dao</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('duong_kinh_dao')">−</button>
+                    <input type="number" v-model.number="settings.duong_kinh_dao"
+                           @change="saveSetting('duong_kinh_dao')"
+                           @blur="validateNumber('duong_kinh_dao')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('duong_kinh_dao')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Hình dạng và đường kính dao khử.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Khử sâu thêm</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('khu_sau_them', 0)"
+                            :disabled="settings.khu_sau_them <= 0">−</button>
+                    <input type="number" v-model.number="settings.khu_sau_them"
+                           @change="saveSetting('khu_sau_them')"
+                           @blur="validateNumber('khu_sau_them', 0)"
+                           step="0.1" min="0">
+                    <button class="spinner-btn" @click="incrementValue('khu_sau_them')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Tăng chiều sâu khử dao so với vị trí tiếp giáp.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cạnh dài tối thiểu</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('canh_dai_toi_thieu')">−</button>
+                    <input type="number" v-model.number="settings.canh_dai_toi_thieu"
+                           @change="saveSetting('canh_dai_toi_thieu')"
+                           @blur="validateNumber('canh_dai_toi_thieu')"
+                           :class="{ 'input-error': settings.canh_dai_toi_thieu < settings.duong_kinh_dao }"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('canh_dai_toi_thieu')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Bỏ qua các góc có một trong hai cạnh ngắn hơn giá trị này.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Cô lập đối tượng</span>
+                <input type="checkbox" v-model="settings.co_lap_doi_tuong" @change="saveSetting('co_lap_doi_tuong')"
+                       id="co_lap_doi_tuong">
+                <label class="switch-label" for="co_lap_doi_tuong"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Cô lập các đối tượng cần khử dao khi bắt đầu.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('khu_dao')],
+        data: {
+            settings: {
+                co_lap_doi_tuong: false,
+                khu_dao: true,
+                tiet_dien_vuong: false,
+                duong_kinh_dao: 6.0,
+                khu_sau_them: 0.0,
+                canh_dai_toi_thieu: 6.0,
+                su_dung_tiet_dien: false,
+                instance_khu: 'ABF_KD',
+                layer_khu: 'ABF_KD'
+            }
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>

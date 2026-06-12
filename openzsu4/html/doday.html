@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cài Đặt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/vue.min.js"></script>
+    <script src="js/setting.js"></script>
+</head>
+<body>
+
+<div id="app" class="container">
+    <div class="col2">
+<div class="switch-stacked">
+            <div class="switch">
+                <span>Sửa tiếp giáp</span>
+                <input type="checkbox" v-model="settings.sua_loi_tiep_giap"
+                       @change="saveSetting('sua_loi_tiep_giap')" id="sua_loi_tiep_giap">
+                <label class="switch-label" for="sua_loi_tiep_giap"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Sửa tiếp giáp của các ván để khớp với độ dày mới.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Độ dày</span>
+                <div class="number-input-group">
+                    <button class="spinner-btn" @click="decrementValue('do_day')">−</button>
+                    <input type="number" v-model.number="settings.do_day"
+                           @change="saveSetting('do_day')"
+                           @blur="validateNumber('do_day')"
+                           step="0.1">
+                    <button class="spinner-btn" @click="incrementValue('do_day')">+</button>
+                </div>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Đặt độ dày cố định cho ván.</small>
+
+    </div>
+
+    <div id="preset-panel"></div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        mixins: [SettingsMixin('doday')],
+        data: {
+            settings: {
+                sua_loi_tiep_giap: true,
+                do_day: 17.5
+            }
+        },
+        methods: {}
+    });
+</script>
+
+</body>
+</html>
