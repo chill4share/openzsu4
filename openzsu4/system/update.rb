@@ -1,15 +1,11 @@
-﻿require 'sketchup'
+require 'sketchup'
 
 module ZSU
   module Update
-    # Đang phát triển tính năng Update
-    GITHUB_URL = "https://github.com/chill4share/openzsu4"
+    GITHUB_URL = "https://github.com/chill4share/openzsu4/releases"
 
     def self.check_version
-      msg = "Dự án OpenZSU hiện đã được chuyển đổi sang mã nguồn mở vĩnh viễn!\n\n" \
-            "Hệ thống tự động cập nhật trực tuyến qua Server cũ đã được tắt để đảm bảo an toàn dữ liệu.\n" \
-            "Bạn có muốn truy cập kho Github của cộng đồng để kiểm tra và đóng góp các bản cập nhật mới không?"
-      
+      msg = "Bạn có muốn mở trang tải các phiên bản (Releases) của OpenZSU trên GitHub để kiểm tra và cập nhật không?"
       result = UI.messagebox(msg, MB_YESNO)
       if result == IDYES
         UI.openURL(GITHUB_URL)

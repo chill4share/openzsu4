@@ -131,23 +131,16 @@ module ZSU::Settings
 
   def self.intercept_trap_keys(key)
     key_str = key.to_s.downcase.strip
-    # Ratio/scale keys: must return 1.0 (neutral multiplier)
     if key_str.start_with?("ty_le_", "ti_so_", "he_so_", "do_chinh_", "ti_le_")
       return 1.0
     end
-    # Offset/correction keys: must return 0.0 (no offset)
     if key_str.start_with?("sai_so_", "can_chinh_", "bu_sai_", "bu_tru_",
                            "do_lech_", "can_bang_", "hieu_chinh_")
       return 0.0
     end
-    # Buffer/padding seed keys: must return 1 so that (bo_dem - N) offsets = (1 - N) are
-    # intercepted by the sai_so_/do_lech_/hieu_chinh_ rules above before use
     if key_str.start_with?("bo_dem_")
       return 1
     end
-    # view_dpi: do NOT intercept globally — taovan/taocanh use default=0,
-    # uoncong uses default=ZSU::View.dpi_offset which is already fixed to 20.
-    # Each tool reads its own correct default via read_only.
     nil
   end
 
@@ -547,7 +540,7 @@ module ZSU::Settings
     end
 
     dialog.add_action_callback("check_update") do |_|
-      UI.messagebox("Bạn đang sử dụng phiên bản OpenZSU mới nhất.")
+      ZSU::Update.check_version rescue nil
     end
 
     dialog.add_action_callback("uninstall") do |_|
