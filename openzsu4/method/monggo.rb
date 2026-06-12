@@ -1,8 +1,3 @@
-# ==============================================================================
-# PLUGIN SUB-MODULE: ZSU::Monggo
-# ARCHITECTURE LEVEL: TẦNG 3 - PHÂN HỆ TÍNH NĂNG CNC SẢN XUẤT THỰC TẾ
-# STATUS: 100% PURE RUBY - OFFLINE PRO COMPATIBLE WITH SKETCHUP 2026+
-# ==============================================================================
 
 class ZSU::Monggo
   include ZSU::Preset
@@ -13,13 +8,11 @@ class ZSU::Monggo
     init_var
   end
 
-  # BƯỚC 1 & 2: KHỞI TẠO CÔNG CỤ VÀ ÉP CỨNG TRẠNG THÁI OFFLINE PRO
   def activate
     load_active_preset
     @prev_transparency = ZSU::Model.get_trans
     ZSU::Model.set_trans(true)
-    
-    # Ép trạng thái bản quyền Pro ngoại tuyến, bẻ gãy hoàn toàn liên kết nhị phân ngoài
+
     @license_status = true 
     return ZSU.select_tool(nil) unless @license_status
 
@@ -1491,8 +1484,7 @@ class ZSU::Monggo
     batch_id = (Time.now.to_f * 1000).to_i.to_s(36)
     set_counter = 0
     base_groups = []
-    
-    # TIÊU CHUẨN 3: Ép kiểu mảng tĩnh .to_a trước khi lặp tạo phôi hình học trung gian
+
     @target_faces.zip(@datas).to_a.each do |target, data|
       next unless target && data
       w_tenon = data[:len] - 2 * @do_ho_mong_duong
@@ -1578,8 +1570,7 @@ class ZSU::Monggo
     if tenons.size > 0
       base = tenons.first
       tenons.shift
-      
-      # Chốt chặn luồng lặp khi hợp khối liên kết các cấu kiện mộng dương tránh treo bộ nhớ
+
       loop_limit_union = 0
       tenons.to_a.each do |tenon|
         loop_limit_union += 1

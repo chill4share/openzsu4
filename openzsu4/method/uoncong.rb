@@ -1,11 +1,5 @@
-# ==============================================================================
-# PLUGIN SUB-MODULE: ZSU::Uoncong
-# ARCHITECTURE LEVEL: TẦNG 3 - PHÂN HỆ TÍNH NĂNG CNC SẢN XUẤT THỰC TẾ
-# STATUS: 100% PURE RUBY - OFFLINE PRO COMPATIBLE WITH SKETCHUP 2026+
-# ==============================================================================
 
 class ZSU::Uoncong
-  # Tích hợp hạ tầng Core và Preset cài đặt mẫu
   include ZSU::Preset
   settings_section "uon_cong"
 
@@ -21,12 +15,7 @@ class ZSU::Uoncong
     reset_state
   end
 
-  # ============================================================================
-  # BƯỚC 1 & 2: KHÔI PHỤC HÀM GIAO DIỆN TỪ RAM VÀ KHỬ HOÀN TOÀN BẪY LICENSE
-  # ============================================================================
   def activate
-    # Ép cứng trạng thái License luôn sẵn sàng, mở khóa tính năng Offline Pro
-    # Vô hiệu hóa hoàn toàn cơ chế gọi file nhị phân kiểm tra key ngầm
     @license_status = true
 
     load_active_preset
@@ -341,7 +330,6 @@ class ZSU::Uoncong
     return [] if faces.length < 2
     groups, current_group = [], []
 
-    # TIÊU CHUẨN 3: Chốt chặn bảo vệ vòng lặp quét cặp biên dạng uốn cong
     loop_limit = 0
     (0...faces.length - 1).each do |i|
       loop_limit += 1
@@ -560,7 +548,6 @@ class ZSU::Uoncong
     curved_groups = keo_dai ? [faces] : small_face_groups
     xuong_duong = []
 
-    # TIÊU CHUẨN 3: Thêm chốt chặn bảo vệ vòng lặp lồng tạo xương dưỡng đại trà
     loop_limit_outer = 0
     curved_groups.each do |curved_faces|
       loop_limit_outer += 1
@@ -577,7 +564,6 @@ class ZSU::Uoncong
 
       expand_chain_adjacent(chain_ents, data[:chain_verts], data[:chain_adjacent], mo_rong)
 
-      # TIÊU CHUẨN 3: Duyệt tìm và lưu chỉ mục cạnh thông qua cấu trúc mảng tĩnh an toàn
       edges = chain_ents.grep(Sketchup::Edge).to_a
 
       pts_trong = ZSU::Offset.edges(edges, -offset_bao_nen)
@@ -619,7 +605,6 @@ class ZSU::Uoncong
         end
       end
 
-      # TIÊU CHUẨN 3: Ép kiểu sang mảng .to_a trước khi xóa các thực thể hình học tạm thời
       chain_ents.grep(Sketchup::Edge).to_a.each { |e| e.erase! if e.valid? }
       ZSU.intersect_fix(chain_ents)
       chain_ents.grep(Sketchup::Edge).to_a.each { |e| e.find_faces if e.valid? }
@@ -663,8 +648,7 @@ class ZSU::Uoncong
 
     c2 = ZSU::Edge.offset_curve(khe_ents, temp_edges, offset_bao_nen + @chieu_rong_xuong, @skip_bending)
     c3 = ZSU::Edge.offset_curve(khe_ents, temp_edges, @do_day_van, @skip_bending)
-    
-    # TIÊU CHUẨN 3: Giải phóng bộ nhớ mảng tĩnh an toàn cho con trỏ RAM
+
     temp_edges.to_a.each { |e| e.erase! if e.valid? }
     return unless c2 && c3 && c2.any? && c3.any?
     ref_plane = calc_ref_plane(c2, c3)
@@ -697,7 +681,6 @@ class ZSU::Uoncong
     cv1_offset = offset_bao_nen
     cv2_offset = @do_day_van + 1.mm
 
-    # TIÊU CHUẨN 3: Cài đặt chốt chặn giới hạn lặp toán học xử lý bo biên xương dưỡng đầu khắc
     loop_limit = 0
     small_face_groups.each do |curved_faces|
       loop_limit += 1
@@ -797,12 +780,11 @@ class ZSU::Uoncong
 
     lot_ref_plane = nil
 
-    # TIÊU CHUẨN 3: Chốt chặn an toàn cho vòng lặp tạo lớp lót chống gằn
     loop_limit_lot = 0
     small_groups.each_with_index do |curved_faces, idx|
       loop_limit_lot += 1
       break if loop_limit_lot > 500
-	  
+
 	  bn_params = bao_nen_params[idx]
       next if bn_params.nil? || !bn_params.is_a?(Hash)
 
@@ -879,17 +861,14 @@ class ZSU::Uoncong
 
       half_expand_width = @mo_rong_bien + 1.mm
       half_dao = @duong_kinh_dao / 2.0
-      # ĐÃ CHUẨN HÓA TOÀN BỘ ĐOẠN TÍNH TOÁN TOẠ ĐỘ:
       un = bn_params[:unit_normal]
       uv = bn_params[:unit_v1]
-      
-      # Kiểm tra các khóa cốt lõi trong Hash trước khi tính toán, nếu thiếu thì bỏ qua để chống crash
+
       next unless bn_params[:a1] && bn_params[:a2] && bn_params[:b1] && bn_params[:b2] && bn_params[:v1]
 
       p1 = bn_params[:a1].offset(un, -half_expand_width).offset(uv, -half_dao)
       p2 = bn_params[:a2].offset(un, -half_expand_width).offset(uv, half_dao)
-      
-      # Tách biệt toán tử tính toán, loại bỏ hoàn toàn bẫy từ khóa 'rescue' gây nhận nhầm scope Face
+
       b2 = bn_params[:b1].offset(bn_params[:v1])
       p3 = bn_params[:b2].offset(un, half_expand_width).offset(uv, half_dao)
       p4 = bn_params[:b1].offset(un, half_expand_width).offset(uv, -half_dao)
@@ -985,8 +964,7 @@ class ZSU::Uoncong
   def nhan_ban_xuong(entities, source_group, reference_vector, trans, name, tag)
     result = []
     n = @so_luong_xuong - 1
-    
-    # TIÊU CHUẨN 3: Chốt chặn an toàn luồng lặp nhân bản xương gỗ CNC
+
     loop_limit = 0
     n.times do |i|
       loop_limit += 1
@@ -1008,14 +986,12 @@ class ZSU::Uoncong
   end
 
   def tinh_thong_so_xe_ranh(e1, e2, tr1 = IDENTITY, tr2 = IDENTITY)
-    # CHUẨN HÓA THEO FILE GỐC: Chấp nhận cả đối tượng ảo và thực thể hình học không gian
     a1 = e1.respond_to?(:vertices) ? e1.vertices[0].position.transform(tr1) : (e1.respond_to?(:position) ? e1.position.transform(tr1) : e1[0].dup)
     a2 = e1.respond_to?(:vertices) ? e1.vertices[1].position.transform(tr1) : (e1.respond_to?(:position) ? e1.position.transform(tr1) : e1[1].dup) rescue e1[1]
-    
+
     b1 = e2.respond_to?(:vertices) ? e2.vertices[0].position.transform(tr2) : (e2.respond_to?(:position) ? e2.position.transform(tr2) : e2[0].dup)
     b2 = e2.respond_to?(:vertices) ? e2.vertices[1].position.transform(tr2) : (e2.respond_to?(:position) ? e2.position.transform(tr2) : e2[1].dup) rescue e2[1]
 
-    # Hỗ trợ sửa lỗi nếu mảng điểm truyền vào dạng phẳng 2 đỉnh đơn độc
     a2 = e1.vertices[1].position.transform(tr1) if e1.respond_to?(:vertices)
     b2 = e2.vertices[1].position.transform(tr2) if e2.respond_to?(:vertices)
 
@@ -1097,11 +1073,10 @@ class ZSU::Uoncong
       un, uv = params[:unit_normal], params[:unit_v1]
       p1 = params[:a1].offset(un, -half_expand_width).offset(uv, -half_dao)
       p2 = params[:a2].offset(un, -half_expand_width).offset(uv, half_dao)
-      
-      # ĐÃ ĐỒNG BỘ ĐỊNH VỊ: Lấy trực tiếp tọa độ b2 được tính toán chính xác từ hàm thông số
+
       p3 = params[:b2].offset(un, half_expand_width).offset(uv, half_dao)
       p4 = params[:b1].offset(un, half_expand_width).offset(uv, -half_dao)
-      
+
       face = ents.add_face(p1, p2, p3, p4)
       if face
         face.layer = line_tag
@@ -1186,8 +1161,7 @@ class ZSU::Uoncong
     ZSU.commit
 
     instances = []
-    
-    # TIÊU CHUẨN 3: Thêm giới hạn vòng lặp xử lý tạo ô khe mộng dưỡng ván CNC
+
     loop_limit = 0
     n.times do |i|
       loop_limit += 1
@@ -1617,8 +1591,7 @@ class ZSU::Uoncong
     faces = unwrapped_group.entities.grep(Sketchup::Face)
     if faces.any?
       face = ZSU::Face.merge_coplanar(faces).first[0] rescue faces.first
-      
-      # Tự động phát hiện hướng kéo khối ra ngoài mặt xương dưỡng để không bị lỗi triệt tiêu khối
+
       push_dir = face.normal.dot(Z_AXIS) >= 0 ? 1 : -1
       face.pushpull(@do_day_van * @ty_le_uon * push_dir)
       unwrapped_group.material = @picked_group_material if @picked_group_material

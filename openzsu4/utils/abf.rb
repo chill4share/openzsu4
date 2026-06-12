@@ -60,13 +60,10 @@ class Sketchup::Face
   unless method_defined?(:set_attribute_raw)
     alias_method :set_attribute_raw, :set_attribute
     def set_attribute(dict, key, val)
-      # Giữ lại tính năng nghiệp vụ: Nếu người dùng chủ động bật "chan_dan_canh" trong cài đặt ZSU,
-      # hệ thống sẽ bảo vệ bề mặt đó không bị ABF ghi đè thuộc tính dán cạnh.
       if dict == "ABF" && get_attribute("ZSU", "chan_dan_canh", false) == true
-        return val # Trả về giá trị hiện tại, giữ nguyên trạng thái chặn dán cạnh hợp lệ
+        return val
       end
-      
-      # Luồng chạy bình thường cho tất cả các trường hợp khác
+
       set_attribute_raw(dict, key, val)
     end
   end

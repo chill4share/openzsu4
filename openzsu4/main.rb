@@ -4,8 +4,7 @@ module ZSU
 
   TOL       = 0.001 unless defined?(ZSU::TOL)
   AREA_TOL  = 0.01 unless defined?(ZSU::AREA_TOL)
-  VERSION   = "4.2.6" unless defined?(ZSU::VERSION)
-
+  VERSION   = defined?(OpenZSU::VERSION) ? OpenZSU::VERSION : "4.2.7"
 
   module Core
     def self.dpi_scale; 2.0; end        
@@ -13,7 +12,7 @@ module ZSU
     def self.cache_step(p); 1; end     
     def self.texture_lod; 1.0; end     
   end
-  
+
   Math = Core unless defined?(ZSU::Math)
   UtilsRender = Core unless defined?(ZSU::UtilsRender)
   module HtmlConfig
@@ -126,7 +125,12 @@ module ZSU
     menu.add_item("Bảng Điều Khiển Cài Đặt") { 
       (defined?(ZSU::Settings) ? ZSU::Settings.open_settings("cai_dat") : ZSU::Caidat.open_settings("cai_dat")) rescue nil 
     }
-    menu.add_item("Kiểm Tra Cập Nhật") { ZSU::Update.check_version rescue nil }
+    menu.add_item("Kiểm Tra Cập Nhật") { ZSU::Update.check_version(true) rescue nil }
+
+    # Silent check for updates at startup (delayed by 3 seconds)
+    UI.start_timer(3.0, false) do
+      ZSU::Update.check_version(false) rescue nil
+    end
 
     file_loaded(__FILE__)
   end

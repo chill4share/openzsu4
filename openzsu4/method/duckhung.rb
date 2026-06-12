@@ -427,7 +427,7 @@ class ZSU::Duckhung
       @cached_bo_goc_segments = cached[:segments]
       @cached_arc_centers = cached[:arc_centers]
     else
-      @cached_inner_pts = ZSU::Offset.offset_pts(verts, f.normal, @chieu_rong_khung)
+      @cached_inner_pts = ZSU::Offset.offset_pts(verts, f.normal, -@chieu_rong_khung)
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && @cached_inner_pts
         @cached_inner_pts, @cached_bo_goc_segments, @cached_arc_centers =
           apply_bo_goc_to_pts(@cached_inner_pts, f.normal, @disabled_arc_indices)
@@ -438,7 +438,7 @@ class ZSU::Duckhung
       if @tao_hem_kinh && @cached_inner_pts
         if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
           hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-          @cached_hem_pts_local = ZSU::Offset.offset_pts(verts, f.normal, hem_offset)
+          @cached_hem_pts_local = ZSU::Offset.offset_pts(verts, f.normal, -hem_offset)
         else
           @cached_hem_pts_local = ZSU::Offset.offset_pts(
             @cached_inner_pts, f.normal.reverse, @chieu_rong_hem_kinh
@@ -463,7 +463,7 @@ class ZSU::Duckhung
       seg.map { |p| p.transform(tr) }
     }
     if @cached_arc_centers && @bo_goc_trong && @ban_kinh_bo_goc > 0
-      c2 = ZSU::Offset.offset_pts(verts, f.normal, @chieu_rong_khung / 2.0)
+      c2 = ZSU::Offset.offset_pts(verts, f.normal, -@chieu_rong_khung / 2.0)
       @cached_circle_pts_world = c2 ? @cached_arc_centers.each_with_index.map { |ac, i|
         ac ? c2[i].transform(tr) : nil
       } : nil
@@ -516,7 +516,7 @@ class ZSU::Duckhung
     target_face = faces.max_by { |f| f.normal.transform(tr).normalize.dot(ref_normal_world) }
     verts = target_face.outer_loop.vertices.map { |v| v.position }
     pts_world = verts.map { |v| v.transform(tr) }
-    inner_pts = ZSU::Offset.offset_pts(verts, target_face.normal, @chieu_rong_khung)
+    inner_pts = ZSU::Offset.offset_pts(verts, target_face.normal, -@chieu_rong_khung)
     return nil unless inner_pts && inner_pts.length >= 3
     disabled_arcs = matching_disabled_arcs(target_face)
     bo_goc_segments = nil
@@ -528,7 +528,7 @@ class ZSU::Duckhung
     if @tao_hem_kinh
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-        hem_pts_local = ZSU::Offset.offset_pts(verts, target_face.normal, hem_offset)
+        hem_pts_local = ZSU::Offset.offset_pts(verts, target_face.normal, -hem_offset)
       else
         hem_pts_local = ZSU::Offset.offset_pts(
           inner_pts, target_face.normal.reverse, @chieu_rong_hem_kinh
@@ -613,7 +613,7 @@ class ZSU::Duckhung
     end
   end
   def build_tiet_dien(ents, frame_face, parent, disabled_arcs)
-    inner_pts = ZSU::Offset.offset_face_pts(frame_face, @chieu_rong_khung)
+    inner_pts = ZSU::Offset.offset_face_pts(frame_face, -@chieu_rong_khung)
     return unless inner_pts && inner_pts.length >= 3
     if @bo_goc_trong && @ban_kinh_bo_goc > 0
       inner_pts, inner_segments =
@@ -633,7 +633,7 @@ class ZSU::Duckhung
     if @tao_hem_kinh
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-        hem_pts = ZSU::Offset.offset_face_pts(frame_face, hem_offset)
+        hem_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh)
       end
@@ -644,7 +644,7 @@ class ZSU::Duckhung
       parent_tr = parent.transformation
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-        glass_pts = ZSU::Offset.offset_face_pts(frame_face, hem_offset)
+        glass_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         glass_pts = ZSU::Offset.offset_pts(
           inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh
@@ -679,7 +679,7 @@ class ZSU::Duckhung
     end
   end
   def build_glass_frame(ents, frame_face, thickness, soft_smooth_map, parent, disabled_arcs)
-    inner_pts = ZSU::Offset.offset_face_pts(frame_face, @chieu_rong_khung)
+    inner_pts = ZSU::Offset.offset_face_pts(frame_face, -@chieu_rong_khung)
     return unless inner_pts && inner_pts.length >= 3
     if @bo_goc_trong && @ban_kinh_bo_goc > 0
       inner_pts, inner_segments =
@@ -699,7 +699,7 @@ class ZSU::Duckhung
       parent_tr = parent.transformation
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-        glass_pts = ZSU::Offset.offset_face_pts(frame_face, hem_offset)
+        glass_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         glass_pts = ZSU::Offset.offset_pts(
           inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh
@@ -743,7 +743,7 @@ class ZSU::Duckhung
     if @tao_hem_kinh
       if @bo_goc_trong && @ban_kinh_bo_goc > 0 && !@bo_goc_kinh
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
-        hem_pts = ZSU::Offset.offset_face_pts(frame_face, hem_offset)
+        hem_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh)
       end

@@ -2,27 +2,27 @@ require 'sketchup'
 
 module ZSU
   module Offset
-    
+
     def self.offset_pts(pts, plane_normal, distance)
       return [] if pts.length < 3
       cleaned_pts = pts.dup
       cleaned_pts.pop if cleaned_pts.first.distance(cleaned_pts.last) < 0.001
       return [] if cleaned_pts.length < 3
-      
+
       offset_lines = []
       cleaned_pts.length.times do |i|
         p1 = cleaned_pts[i]
         p2 = cleaned_pts[(i + 1) % cleaned_pts.length]
         edge_vector = p2 - p1
         next if edge_vector.length < 0.001
-        
+
         perp_vector = edge_vector.cross(plane_normal).normalize
-        translation_vector = perp_vector.transform(Geom::Transformation.new(perp_vector, distance))
+        translation_vector = perp_vector.clone
         translation_vector.length = distance.abs
         translation_vector.reverse! if distance < 0
         offset_lines << [p1.offset(translation_vector), edge_vector]
       end
-      
+
       new_pts = []
       num_lines = offset_lines.length
       num_lines.times do |i|
@@ -36,13 +36,13 @@ module ZSU
       return [] if pts.length < 2
       num_pts = pts.length
       offset_lines = []
-      
+
       (num_pts - 1).times do |i|
         p1 = pts[i]
         p2 = pts[i + 1]
         edge_vector = p2 - p1
         next if edge_vector.length < 0.001
-        
+
         perp_vector = edge_vector.cross(plane_normal).normalize
         translation_vector = perp_vector.clone
         translation_vector.length = distance.abs
@@ -50,7 +50,7 @@ module ZSU
         offset_lines << [p1.offset(translation_vector), edge_vector]
       end
       return [] if offset_lines.empty?
-      
+
       new_pts = []
       new_pts << offset_lines.first[0]
       (offset_lines.length - 1).times do |i|

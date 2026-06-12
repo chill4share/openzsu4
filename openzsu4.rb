@@ -1,11 +1,8 @@
-# ====================================================================
-# OPENZSU - LOAD ENTRY
-# ====================================================================
 require 'sketchup.rb'
 require 'extensions.rb'
 
 module OpenZSU
-  VERSION = "4.2.6"
+  VERSION = "4.2.7"
 
   unless file_loaded?(__FILE__)
     loader_path = File.join(File.dirname(__FILE__), "openzsu4", "main.rb")

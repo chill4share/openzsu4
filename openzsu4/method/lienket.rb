@@ -1,8 +1,3 @@
-# ==============================================================================
-# PLUGIN SUB-MODULE: ZSU::Lienket
-# ARCHITECTURE LEVEL: TẦNG 3 - PHÂN HỆ TÍNH NĂNG CNC SẢN XUẤT THỰC TẾ
-# STATUS: 100% PURE RUBY - OFFLINE PRO COMPATIBLE WITH SKETCHUP 2026+
-# ==============================================================================
 
 class ZSU::Lienket
   include ZSU::Preset
@@ -13,13 +8,11 @@ class ZSU::Lienket
     init_var
   end
 
-  # BƯỚC 1 & 2: KHỞI TẠO CÔNG CỤ VÀ ÉP CỨNG TRẠNG THÁI OFFLINE PRO
   def activate
     load_active_preset
     @prev_transparency = ZSU::Model.get_trans
     ZSU::Model.set_trans(true)
-    
-    # Ép trạng thái bản quyền Pro ngoại tuyến, bẻ gãy hoàn toàn liên kết nhị phân ngoài
+
     @license_status = true 
     return ZSU.select_tool(nil) unless @license_status
 

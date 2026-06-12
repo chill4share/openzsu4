@@ -3,7 +3,8 @@ require 'fileutils'
 
 module ZSU::Settings
 
-  SETTINGS_DIR = File.join(ENV['LOCALAPPDATA'], "ZSU")
+  SETTINGS_DIR = File.join(ENV['LOCALAPPDATA'], "OPENZSU")
+  OLD_SETTINGS_DIR = File.join(ENV['LOCALAPPDATA'], "ZSU")
   SETTINGS_FILE = File.join(SETTINGS_DIR, "settings.json")
   SETTINGS_BACKUP = File.join(SETTINGS_DIR, "settings_backup.json")
   STARTUP_FILE = File.join(SETTINGS_DIR, "startup.json")
@@ -14,6 +15,21 @@ module ZSU::Settings
   SETTINGS_VERSION = 4
 
   def self.ensure_file
+    if !File.directory?(SETTINGS_DIR) && File.directory?(OLD_SETTINGS_DIR)
+      begin
+        FileUtils.mkdir_p(SETTINGS_DIR)
+        Dir.glob(File.join(OLD_SETTINGS_DIR, "*")).each do |file|
+          next if File.directory?(file)
+          FileUtils.cp(file, File.join(SETTINGS_DIR, File.basename(file)))
+        end
+        old_backup = File.join(OLD_SETTINGS_DIR, "backup")
+        if File.directory?(old_backup)
+          FileUtils.cp_r(old_backup, SETTINGS_DIR)
+        end
+      rescue => e
+        # ignore migration errors
+      end
+    end
     FileUtils.mkdir_p(SETTINGS_DIR)
     if File.exist?(SETTINGS_FILE)
       content = File.read(SETTINGS_FILE) rescue nil
@@ -540,7 +556,12 @@ module ZSU::Settings
     end
 
     dialog.add_action_callback("check_update") do |_|
-      ZSU::Update.check_version rescue nil
+      begin
+        ZSU::Update.check_version(true)
+      rescue => e
+        UI.messagebox("Lỗi cập nhật: #{e.message}")
+        puts e.backtrace
+      end
     end
 
     dialog.add_action_callback("uninstall") do |_|
