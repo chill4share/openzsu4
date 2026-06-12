@@ -267,7 +267,7 @@ module ZSU::Caidat
             if (window.sketchup) {
                 window.sketchup.check_update();
             } else {
-                window.location.href = 'skp:reset_settings';
+                window.location.href = 'skp:check_update';
             }
         } else if (event.data && event.data.action === 'install_version') {
             if (window.sketchup) {
