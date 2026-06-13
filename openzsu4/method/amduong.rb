@@ -825,6 +825,7 @@ class ZSU::Amduong
     overcut = ZSU::Khudao.allocate
     overcut.instance_variable_set(:@khu_sau_them, 0)
     overcut.instance_variable_set(:@ty_le_khu, @ty_le_giao)
+    overcut.instance_variable_set(:@chan_dan_canh, @chan_dan_canh_khau)
     shared_edges.each do |edge|
       next unless edge.valid? && edge.faces.size == 2
       parent = edge.parent.instances.first rescue nil

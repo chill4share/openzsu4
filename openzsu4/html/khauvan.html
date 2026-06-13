@@ -98,6 +98,16 @@
             </div>
         </div>
         <small class="switch-stacked-hint">Màu hiển thị khi chọn đối tượng.</small>
+
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Chặn dán cạnh</span>
+                <input type="checkbox" v-model="settings.chan_dan_canh_khau"
+                       @change="saveSetting('chan_dan_canh_khau')" id="chan_dan_canh_khau">
+                <label class="switch-label" for="chan_dan_canh_khau"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Không áp dụng dán cạnh tại các đường khấu ván.</small>
     </div>
 
     <div id="preset-panel"></div>
@@ -115,6 +125,7 @@
                 gia_tri_khau_them: 0,
                 kieu_khau_them: "tat_ca",
                 tu_dong_tach_khoi: true,
+                chan_dan_canh_khau: false,
                 mau_dao_khau: [60, 175, 214],
                 mau_bi_khau: [210, 117, 159]
             }

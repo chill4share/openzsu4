@@ -355,6 +355,13 @@ class ZSU::Noivan
       contact_end = Geom.linear_combination(0.5, le1_pts.last, 0.5, le2_pts.last)
       total_dist = contact_start.distance(contact_end)
       mid_a = contact_start
+
+      local_normal = transformed_normal.clone
+      test_pt = mid_a.offset(local_normal, 1.mm)
+      if !ZSU::Solid.within?(test_pt, mp, false, false)
+        local_normal = local_normal.reverse
+      end
+
       if @cach_deu_hai_dau
         cach_truoc = @cach_truoc
         cach_sau = @cach_truoc
@@ -400,7 +407,7 @@ class ZSU::Noivan
         start_point: start_point,
         end_point: end_point,
         unit_v1: unit_v1,
-        transformed_normal: transformed_normal,
+        transformed_normal: local_normal,
         len: len,
         divisor: so_luong_mong > 1 ? so_luong_mong - 1 : 1,
         transform: @transformation,

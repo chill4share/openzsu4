@@ -43,6 +43,7 @@ module ZSU
       @kieu_khau_them = read("kieu_khau_them", "tat_ca")
       @gia_tri_khau_them = read("gia_tri_khau_them", 0.0).to_f.mm
       @tu_dong_tach_khoi = read("tu_dong_tach_khoi", true)
+      @chan_dan_canh_khau = read("chan_dan_canh_khau", false)
       @bu_tru_van_khau = read("bu_tru_van_khau", (@do_chinh_khau_do - 1.0) * 14, true).to_f.mm
       @hieu_chinh_khau = read("hieu_chinh_khau", @bo_dem_khau - 32, true).to_f.mm
       @view_dpi = read("view_dpi", 0, true).to_f.mm
@@ -67,6 +68,9 @@ module ZSU
         "Tự động tách khối" => {
           tu_dong_tach_khoi: [:switch, "Tự động tách khối"],
         },
+        "Chặn dán cạnh" => {
+          chan_dan_canh_khau: [:switch, "Chặn dán cạnh"],
+        },
         "Màu sắc" => {
           mau_dao_khau: [:color, "Màu dao khấu"],
           mau_bi_khau: [:color, "Màu bị khấu"],
@@ -81,6 +85,7 @@ module ZSU
       init_preset(:kich_hoat_khu_dao, s)
       init_preset(:dao_thu_tu, s)
       init_preset(:tu_dong_tach_khoi, s)
+      init_preset(:chan_dan_canh_khau, s)
       init_preset(:mau_dao_khau, s)
       init_preset(:mau_bi_khau, s)
     end
@@ -273,7 +278,17 @@ module ZSU
             next unless dao.valid?
             dup = ZSU::Board.clone_and_clean(dao)
             ZSU::Board.add_thickness(dup, @gia_tri_khau_them * 2)
-            targets.each { |t| ZSU::Solid.trim(t, dup) if t.valid? }
+            targets.each do |t|
+              next unless t.valid?
+              faces_before = ZSU.grep_ents(t, :face).to_a
+              ZSU::Solid.trim(t, dup)
+              if @chan_dan_canh_khau
+                new_faces = ZSU.grep_ents(t, :face).to_a - faces_before
+                new_faces.each do |nf|
+                  nf.set_attribute("ZSU", "chan_dan_canh", true) if nf.valid?
+                end
+              end
+            end
             dup.erase! if dup.valid?
           end
         else
@@ -288,7 +303,14 @@ module ZSU
               int = ZSU::Solid.intersect(dup_dao, dup_t)
               next unless int&.valid?
               expand_all_faces(int, @gia_tri_khau_them, skip_normal: skip)
+              faces_before = ZSU.grep_ents(t, :face).to_a
               ZSU::Solid.trim(t, int)
+              if @chan_dan_canh_khau
+                new_faces = ZSU.grep_ents(t, :face).to_a - faces_before
+                new_faces.each do |nf|
+                  nf.set_attribute("ZSU", "chan_dan_canh", true) if nf.valid?
+                end
+              end
               int.erase! if int.valid?
             end
           end
@@ -297,7 +319,17 @@ module ZSU
         daos.each do |dao|
           next unless dao.valid?
           dup = ZSU::Board.clone_and_clean(dao)
-          targets.each { |t| ZSU::Solid.trim(t, dup) if t.valid? }
+          targets.each do |t|
+            next unless t.valid?
+            faces_before = ZSU.grep_ents(t, :face).to_a
+            ZSU::Solid.trim(t, dup)
+            if @chan_dan_canh_khau
+              new_faces = ZSU.grep_ents(t, :face).to_a - faces_before
+              new_faces.each do |nf|
+                nf.set_attribute("ZSU", "chan_dan_canh", true) if nf.valid?
+              end
+            end
+          end
           dup.erase!
         end
       end

@@ -21,6 +21,7 @@ class ZSU::Khudao
     @khu_sau_them = read("khu_sau_them", 0.0).to_f.mm
     @canh_dai_toi_thieu = read("canh_dai_toi_thieu", 10.0).to_f.mm
     @co_lap_doi_tuong = read("co_lap_doi_tuong", false)
+    @chan_dan_canh = read("chan_dan_canh", false)
     @can_chinh_khu = read("can_chinh_khu", (@ti_so_khu_do - 1.0) * 7, true).to_f.mm
     @hieu_chinh_khu = read("hieu_chinh_khu", @bo_dem_khu - 4, true).to_f.mm
     @presets = read("presets", nil)
@@ -41,6 +42,9 @@ class ZSU::Khudao
       },
       "Cô lập đối tượng" => {
         co_lap_doi_tuong: [:switch, "Cô lập đối tượng"],
+      },
+      "Chặn dán cạnh" => {
+        chan_dan_canh: [:switch, "Chặn dán cạnh"],
       }
     )
   end
@@ -54,6 +58,7 @@ class ZSU::Khudao
     @su_dung_tiet_dien = preset_settings["su_dung_tiet_dien"] || false
     @instance_khu = preset_settings["instance_khu"] || "ABF_KD"
     @layer_khu = preset_settings["layer_khu"] || "ABF_KD"
+    @chan_dan_canh = preset_settings["chan_dan_canh"] || false
     @cached_parent = nil
   end
   def activate
@@ -490,7 +495,14 @@ class ZSU::Khudao
     filtered = faces.select { |fc| fc.vertices.any? { |vt| vt.position.transform(tr) == v_pos } }
     smallest_face = filtered.min_by(&:area)
     return unless smallest_face
+    faces_before_pushpull = ents.grep(Sketchup::Face)
     smallest_face.pushpull(-e.length * @ty_le_khu)
+    if @chan_dan_canh
+      new_faces = ents.grep(Sketchup::Face) - faces_before_pushpull
+      new_faces.each do |nf|
+        nf.set_attribute("ZSU", "chan_dan_canh", true) if nf.valid?
+      end
+    end
     ZSU::Face.merge_coplanar(ents.grep(Sketchup::Face))
     reset_state
   end

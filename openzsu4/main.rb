@@ -4,7 +4,7 @@ module ZSU
 
   TOL       = 0.001 unless defined?(ZSU::TOL)
   AREA_TOL  = 0.01 unless defined?(ZSU::AREA_TOL)
-  VERSION   = defined?(OpenZSU::VERSION) ? OpenZSU::VERSION : "4.2.7"
+  VERSION   = defined?(OpenZSU::VERSION) ? OpenZSU::VERSION : "4.2.8"
 
   module Core
     def self.dpi_scale; 2.0; end        

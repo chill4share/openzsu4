@@ -106,6 +106,16 @@
         </div>
         <small class="switch-stacked-hint">Cô lập các đối tượng cần khử dao khi bắt đầu.</small>
 
+        <div class="switch-stacked">
+            <div class="switch">
+                <span>Chặn dán cạnh</span>
+                <input type="checkbox" v-model="settings.chan_dan_canh" @change="saveSetting('chan_dan_canh')"
+                       id="chan_dan_canh">
+                <label class="switch-label" for="chan_dan_canh"></label>
+            </div>
+        </div>
+        <small class="switch-stacked-hint">Không áp dụng dán cạnh tại các đường khử dao.</small>
+
     </div>
 
     <div id="preset-panel"></div>
@@ -118,6 +128,7 @@
         data: {
             settings: {
                 co_lap_doi_tuong: false,
+                chan_dan_canh: false,
                 khu_dao: true,
                 tiet_dien_vuong: false,
                 duong_kinh_dao: 6.0,
