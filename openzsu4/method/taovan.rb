@@ -87,7 +87,33 @@ class ZSU::Taovan
     init_preset(:layer, s)
   end
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_chuyen_che_do
+      if @locked
+        if @so_khoang_cach > 1
+          @che_do_mo_rong = (@che_do_mo_rong + 1) % 3
+        else
+          @che_do = case @che_do
+                    when "lot_long" then "chinh_giua"
+                    when "chinh_giua" then "phu_bi"
+                    else "lot_long"
+                    end
+          write("che_do", @che_do)
+        end
+        calc_all_box_points
+        view.invalidate
+        update_status
+      else
+        @tinh_theo_khong_gian = !@tinh_theo_khong_gian
+        write("tinh_theo_khong_gian", @tinh_theo_khong_gian)
+        @adv_cache_face = @adv_cache_parent = nil
+        @adv_cache_cells = nil
+        update_preview
+        view.invalidate
+        update_status
+      end
+      return true
+    end
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('tao_van')
       return true
     end
@@ -107,29 +133,6 @@ class ZSU::Taovan
   def onKeyUp(key, repeat, flags, view)
     return if @sb_selected_item
     return true if key == ALT_MODIFIER_KEY
-    if key == 9 && @locked
-      if @so_khoang_cach > 1
-        @che_do_mo_rong = (@che_do_mo_rong + 1) % 3
-      else
-        @che_do = case @che_do
-                  when "lot_long" then "chinh_giua"
-                  when "chinh_giua" then "phu_bi"
-                  else "lot_long"
-                  end
-        write("che_do", @che_do)
-      end
-      calc_all_box_points
-      view.invalidate
-      update_status
-    elsif key == 9 && !@locked
-      @tinh_theo_khong_gian = !@tinh_theo_khong_gian
-      write("tinh_theo_khong_gian", @tinh_theo_khong_gian)
-      @adv_cache_face = @adv_cache_parent = nil
-      @adv_cache_cells = nil
-      update_preview
-      view.invalidate
-      update_status
-    end
   end
   def enableVCB?
     true
@@ -425,7 +428,7 @@ class ZSU::Taovan
       if face
         vec = top[0] - bottom[0]
         direction = face.normal.dot(vec) > 0 ? 1 : -1
-        face.pushpull(direction * (vec.length * @ty_le_van + @sai_so_gop + @can_chinh_van))
+        face.pushpull(direction * vec.length)
         group.entities.grep(Sketchup::Face).each do |f|
           f.material = nil
           f.back_material = nil
@@ -541,7 +544,7 @@ class ZSU::Taovan
         cap_nhat_do_day(parent)
         return
       end
-      current_point = hit_pt.offset(@normal, 0.1.mm * @ty_le_van + @do_lech_bat)
+      current_point = hit_pt.offset(@normal, 0.1.mm)
     end
     @free = true
     cap_nhat_do_day(parent)
@@ -762,7 +765,7 @@ class ZSU::Taovan
     other = 1 - axis
     result = [0.0, 0.0]
     result[axis] = value
-    result[other] = p1[other] + t * (p2[other] - p1[other]) + @hieu_chinh_cat
+    result[other] = p1[other] + t * (p2[other] - p1[other])
     result
   end
   def open_settings

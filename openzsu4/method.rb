@@ -66,17 +66,63 @@ module ZSU::Method
   end
 
   def self.check_clear(center, direction, half_len, edges_flat, tolerance)
-    s1_start = center - direction * half_len
-    s1_end = center + direction * half_len
+    # Safely convert center to Point3d
+    unless center.is_a?(Geom::Point3d)
+      begin
+        center = Geom::Point3d.new(center)
+      rescue
+        return true # Skip check or treat as clear
+      end
+    end
+
+    # Safely convert direction to Vector3d
+    unless direction.is_a?(Geom::Vector3d)
+      begin
+        if direction.respond_to?(:to_vector)
+          direction = direction.to_vector
+        else
+          direction = Geom::Vector3d.new(direction)
+        end
+      rescue
+        return true
+      end
+    end
+
+    begin
+      direction = direction.normalize
+    rescue
+      return true
+    end
+
+    # Safely convert numeric values
+    half_len = half_len.to_f rescue 0.0
+    tolerance = tolerance.to_f rescue 0.0
+
+    # Ensure s1_start and s1_end are calculated safely
+    begin
+      s1_start = center - direction * half_len
+      s1_end = center + direction * half_len
+    rescue
+      s1_start = center
+      s1_end = center
+    end
+
+    return true if edges_flat.nil? || edges_flat.empty?
 
     i = 0
     while i < edges_flat.length
-      e_start = Geom::Point3d.new(edges_flat[i], edges_flat[i+1], edges_flat[i+2])
-      e_end = Geom::Point3d.new(edges_flat[i+3], edges_flat[i+4], edges_flat[i+5])
+      begin
+        break if i + 5 >= edges_flat.length
+        
+        e_start = Geom::Point3d.new(edges_flat[i].to_f, edges_flat[i+1].to_f, edges_flat[i+2].to_f)
+        e_end = Geom::Point3d.new(edges_flat[i+3].to_f, edges_flat[i+4].to_f, edges_flat[i+5].to_f)
 
-      dist = segment_segment_distance(s1_start, s1_end, e_start, e_end)
-      if dist < tolerance - 1e-4
-        return false
+        dist = segment_segment_distance(s1_start, s1_end, e_start, e_end) rescue Float::INFINITY
+        if dist < tolerance - 1e-4
+          return false
+        end
+      rescue
+        # If any edge is corrupted, skip it
       end
       i += 6
     end
@@ -86,21 +132,55 @@ module ZSU::Method
   def self.adjust_centers(centers_flat, ev_a, ev_b, edges_flat, params)
     return [] if centers_flat.nil? || centers_flat.empty?
 
-    direction = Geom::Vector3d.new(ev_a[0], ev_a[1], ev_a[2]).normalize
-    half_len = params[0].to_f
-    step = params[1].to_f
-    tolerance = params[2].to_f
-    range_start = Geom::Point3d.new(params[3], params[4], params[5])
-    range_end = Geom::Point3d.new(params[6], params[7], params[8])
+    begin
+      # Safely construct direction vector
+      if ev_a.nil?
+        direction = Geom::Vector3d.new(0, 0, 1)
+      elsif ev_a.is_a?(Geom::Vector3d)
+        direction = ev_a.normalize rescue Geom::Vector3d.new(0, 0, 1)
+      elsif ev_a.respond_to?(:to_vector)
+        direction = ev_a.to_vector.normalize rescue Geom::Vector3d.new(0, 0, 1)
+      elsif ev_a.is_a?(Array) && ev_a.length >= 3
+        direction = Geom::Vector3d.new(ev_a[0].to_f, ev_a[1].to_f, ev_a[2].to_f).normalize rescue Geom::Vector3d.new(0, 0, 1)
+      else
+        direction = Geom::Vector3d.new(0, 0, 1)
+      end
+    rescue
+      direction = Geom::Vector3d.new(0, 0, 1)
+    end
+
+    half_len = (params && params[0]) ? params[0].to_f : 0.0
+    step = (params && params[1] && params[1].to_f > 0.001) ? params[1].to_f : 10.0
+    tolerance = (params && params[2]) ? params[2].to_f : 0.0
+
+    begin
+      range_start = (params && params[3] && params[4] && params[5]) ? Geom::Point3d.new(params[3].to_f, params[4].to_f, params[5].to_f) : Geom::Point3d.new(0, 0, 0)
+    rescue
+      range_start = Geom::Point3d.new(0, 0, 0)
+    end
+
+    begin
+      range_end = (params && params[6] && params[7] && params[8]) ? Geom::Point3d.new(params[6].to_f, params[7].to_f, params[8].to_f) : Geom::Point3d.new(0, 0, 0)
+    rescue
+      range_end = Geom::Point3d.new(0, 0, 0)
+    end
 
     centers = []
     i = 0
     while i < centers_flat.length
-      centers << Geom::Point3d.new(centers_flat[i], centers_flat[i+1], centers_flat[i+2])
+      begin
+        break if i + 2 >= centers_flat.length
+        centers << Geom::Point3d.new(centers_flat[i].to_f, centers_flat[i+1].to_f, centers_flat[i+2].to_f)
+      rescue
+        # Ignore invalid center points
+      end
       i += 3
     end
 
-    t_values = centers.map { |c| (c - range_start).dot(direction) }
+    return centers_flat if centers.empty?
+
+    # Pre-calculate t-values safely
+    t_values = centers.map { |c| ((c - range_start).dot(direction) rescue 0.0) }
 
     adjusted_flat = []
 
@@ -116,14 +196,15 @@ module ZSU::Method
 
       dist_prev = t_curr - t_prev
       dist_next = t_next - t_curr
-      max_steps = ( [dist_prev, dist_next].max / step ).ceil
+      max_steps = ( [dist_prev, dist_next].max / step ).ceil rescue 10
+      max_steps = 100 if max_steps > 100 # Guard against infinite loop / large step count
 
       found = false
       (1..max_steps).each do |s|
         shifted_t = t_curr + s * step
         if shifted_t > t_prev && shifted_t < t_next
-          shifted_center = center + direction * (s * step)
-          if check_clear(shifted_center, direction, half_len, edges_flat, tolerance)
+          shifted_center = center + direction * (s * step) rescue nil
+          if shifted_center && check_clear(shifted_center, direction, half_len, edges_flat, tolerance)
             adjusted_flat.push(shifted_center.x, shifted_center.y, shifted_center.z)
             found = true
             break
@@ -132,8 +213,8 @@ module ZSU::Method
 
         shifted_t = t_curr - s * step
         if shifted_t > t_prev && shifted_t < t_next
-          shifted_center = center - direction * (s * step)
-          if check_clear(shifted_center, direction, half_len, edges_flat, tolerance)
+          shifted_center = center - direction * (s * step) rescue nil
+          if shifted_center && check_clear(shifted_center, direction, half_len, edges_flat, tolerance)
             adjusted_flat.push(shifted_center.x, shifted_center.y, shifted_center.z)
             found = true
             break

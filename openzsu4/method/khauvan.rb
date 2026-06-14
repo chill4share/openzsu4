@@ -27,12 +27,14 @@ module ZSU
       end
       update_status
     end
+
     def onKeyDown(key, repeat, flags, view)
-      if key == 192
+      if key == ZSU::Settings.key_mo_cai_dat
         ZSU::Settings.open_settings('khau_van')
         return true
       end
     end
+
     def init_var
       @dao_thu_tu = read("dao_thu_tu", true)
       @do_chinh_khau_do = read("do_chinh_khau_do", ZSU::View.grid_scale, true).to_f
@@ -192,7 +194,7 @@ module ZSU
       ZSU.get_ents(group).grep(Sketchup::Face).each do |face|
         next unless face.valid?
         next if skip_normal && face.normal.parallel?(skip_normal)
-        face.pushpull(distance * @ty_le_khau + @hieu_chinh_khau + @bu_tru_van_khau)
+        face.pushpull(distance)
       end
     end
     def xu_ly_nguoc(flags, x, y, view)

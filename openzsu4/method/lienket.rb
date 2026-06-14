@@ -76,8 +76,22 @@ class ZSU::Lienket
     update_status
   end
 
+
+
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_chuyen_che_do
+      @che_do = (@che_do + 1) % 3
+      write("che_do", @che_do)
+      @xoa_parent = nil
+      @xoa_current_id = nil
+      @xoa_id_groups = nil
+      @xoa_faces = nil
+      @xoa_edges = nil
+      update_status
+      view.invalidate
+      return true
+    end
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('lien_ket')
     elsif key == VK_CONTROL
       @ctrl_mode = true
@@ -105,17 +119,7 @@ class ZSU::Lienket
 
   def onKeyUp(key, repeat, flags, view)
     return if @sb_selected_item
-    if key == 9
-      @che_do = (@che_do + 1) % 3
-      write("che_do", @che_do)
-      @xoa_parent = nil
-      @xoa_current_id = nil
-      @xoa_id_groups = nil
-      @xoa_faces = nil
-      @xoa_edges = nil
-      update_status
-      view.invalidate
-    elsif key == VK_CONTROL
+    if key == VK_CONTROL
       @ctrl_mode = false
       update_ctrl_faces
       view.invalidate
@@ -663,6 +667,7 @@ class ZSU::Lienket
 
   def reset_state
     @target_faces = []
+    @resolved_targets = []
     @target_face = nil
     @target_parent = nil
     @mortise_parent = nil
@@ -959,7 +964,7 @@ class ZSU::Lienket
         end
       end
     end
-    @target_faces = new_targets
+    @resolved_targets = new_targets
     geometries
   end
 
@@ -1003,7 +1008,7 @@ class ZSU::Lienket
           return { data: data, index: i } if hit
         end
         if @tao_chot_chinh
-          mortise_center = @can_giua_chot_chinh ? bp : base_point.offset(zaxis, face_side * (half_len - @chot_chinh_cach_mat))
+          mortise_center = @can_giua_chot_chinh ? bp : bp.offset(zaxis, face_side * (half_len - @chot_chinh_cach_mat))
           r = @duong_kinh_lo_chot / 2.0
           hit = ZSU::View.point_in_circle_2d?(@mouse_x, @mouse_y, mortise_center, r, yaxis, zaxis)
           return { data: data, index: i } if hit
@@ -1011,7 +1016,7 @@ class ZSU::Lienket
         if @tao_chot_phu
           pilot_offset = @chot_phu_cach_chot_chinh
           base_vec = (data[:start_point] - data[:end_point])
-          pilot_base = @can_giua_chot_phu ? bp : base_point.offset(zaxis, face_side * (half_len - @chot_phu_cach_mat))
+          pilot_base = @can_giua_chot_phu ? bp : bp.offset(zaxis, face_side * (half_len - @chot_phu_cach_mat))
           centers = if base_vec.length == 0
                       [pilot_base]
                     else
@@ -1435,26 +1440,17 @@ class ZSU::Lienket
     end
     line1 = e1.vertices.map { |v| v.position.transform(tr) }
     line2 = e2.vertices.map { |v| v.position.transform(tr) }
-    band_normal = face.normal.transform(tr)
-    band_mid = Geom.linear_combination(0.5, line1[0], 0.5, line1[1])
 
     nearby = find_nearby_groups(parent)
-    loop_limit_mortise = 0
     result = nearby.select { |g|
-      loop_limit_mortise += 1
-      break if loop_limit_mortise > 500
       g_tr = g.transformation
       largest = ZSU::Board.get_cnc_faces(g)
       next unless largest && largest.size >= 2
-      closest_cf = largest.min_by { |cf|
-        plane = [cf.bounds.center.transform(g_tr), cf.normal.transform(g_tr)]
-        band_mid.distance_to_plane(plane).abs
+      edges = largest.flat_map(&:edges).uniq
+      edges.any? { |e|
+        ep = e.vertices.map { |v| v.position.transform(g_tr) }
+        Geom.intersect_line_line(ep, line1) && Geom.intersect_line_line(ep, line2)
       }
-      cn = closest_cf.normal.transform(g_tr)
-      next unless cn.parallel?(band_normal) && cn.dot(band_normal) < 0
-      le1_pts = edge_contact_points(line1, g)
-      le2_pts = edge_contact_points(line2, g)
-      le1_pts.size >= 2 && le2_pts.size >= 2
     }
     @mortise_cache[cache_key] = result
     result
@@ -1736,7 +1732,7 @@ class ZSU::Lienket
       data_idx = @datas.index { |d| d.equal?(hover_data) }
       if data_idx
         @datas = [hover_data]
-        @target_faces = [@target_faces[data_idx]]
+        @resolved_targets = [@resolved_targets[data_idx]]
       end
     else
       @hover_idx = nil
@@ -1751,7 +1747,7 @@ class ZSU::Lienket
     batch_id = (Time.now.to_f * 1000).to_i.to_s(36)
     set_counter = 0
     base_groups = []
-    @target_faces.zip(@datas).each do |target, data|
+    @resolved_targets.zip(@datas).each do |target, data|
       next unless target && data
       fs = data[:face_side] || 1
       z  = data[:len]
@@ -1768,7 +1764,7 @@ class ZSU::Lienket
         mp_cp_rect: base_mp_cp_rect, mp_cp_circle: base_mp_cp_circle
       }
     end
-    @target_faces.zip(@datas).each_with_index do |(target, data), idx|
+    @resolved_targets.zip(@datas).each_with_index do |(target, data), idx|
       next unless target && data
       bases = base_groups[idx]
       next unless bases

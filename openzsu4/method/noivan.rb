@@ -180,7 +180,7 @@ class ZSU::Noivan
     update_status
   end
   def onKeyDown(key, repeat, flags, view)
-    ZSU::Settings.open_settings('noi_van') if key == 192
+    ZSU::Settings.open_settings('noi_van') if key == ZSU::Settings.key_mo_cai_dat
   end
   def onMouseMove(flags, x, y, view)
     handle_ui_mouse_move(x, y, view)
@@ -188,7 +188,7 @@ class ZSU::Noivan
     ph.do_pick(x, y)
     f = ph.picked_face
     parent = ph.best_picked
-    unless parent
+    unless parent && ZSU.is_container?(parent)
       reset_state
       view.invalidate
       return
@@ -247,29 +247,37 @@ class ZSU::Noivan
     return unless face && face.valid? && parent
     @mortise_cache ||= {}
     return @mortise_cache[face.entityID] if @mortise_cache.key?(face.entityID)
+
     tr = parent.transformation
     sorted = face.edges.sort_by { |e| -e.length }
-    e1, e2 = sorted[0], sorted[1]
+    e1 = sorted[0]
+    e2 = sorted[1]
     unless e1 && e2
       @mortise_cache[face.entityID] = []
       return []
     end
     line1 = e1.vertices.map { |v| v.position.transform(tr) }
     line2 = e2.vertices.map { |v| v.position.transform(tr) }
+
+    target_point = face.bounds.center.transform(tr)
     target_normal = face.normal.transform(tr).normalize
-    target_plane = [face.bounds.center.transform(tr), target_normal]
-    result = find_nearby_groups(parent).select { |g|
+    target_plane = [target_point, target_normal]
+
+    nearby = find_nearby_groups(parent)
+    result = nearby.select { |g|
       g_tr = g.transformation
       largest = ZSU::Board.get_cnc_faces(g)
       next unless largest && largest.size >= 2
+      largest_edges = largest.flat_map(&:edges).uniq
       all_edges = ZSU.grep_ents(g, :edge)
       next unless all_edges
-      edges = all_edges - largest.flat_map(&:edges).uniq
+      edges = all_edges - largest_edges
       edges.any? { |e|
         ep = e.vertices.map { |v| v.position.transform(g_tr) }
         next unless Geom.intersect_line_line(ep, line1) && Geom.intersect_line_line(ep, line2)
         e.faces.any? { |ef|
-          ef.normal.transform(g_tr).normalize.reverse.samedirection?(target_normal) &&
+          ef_normal = ef.normal.transform(g_tr).normalize
+          ef_normal.reverse.samedirection?(target_normal) &&
             ef.bounds.center.transform(g_tr).distance_to_plane(target_plane).abs < ZSU::TOL
         }
       }

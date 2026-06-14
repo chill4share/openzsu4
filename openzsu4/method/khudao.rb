@@ -218,19 +218,9 @@ class ZSU::Khudao
     end
     target_data
   end
+
   def onKeyDown(key, repeat, flags, view)
-    ZSU::Settings.open_settings('khu_dao') if key == 192
-    if key == VK_SHIFT && @parent && Sketchup.active_model.selection.empty?
-      @target_data = build_target_all_corners(@parent)
-      view.invalidate
-    end
-  end
-  def onKeyUp(key, repeat, flags, view)
-    if key == VK_SHIFT && Sketchup.active_model.selection.empty?
-      @target_data = @parent && @hover_edge ? build_target_manual : []
-      view.invalidate
-      update_status
-    elsif key == 9
+    if key == ZSU::Settings.key_chuyen_che_do
       values = ["lon", "nho", "giua"]
       index = values.index(@vi_tri_khu) || 0
       @vi_tri_khu = values[(index + 1) % values.size]
@@ -245,8 +235,22 @@ class ZSU::Khudao
       end
       view.invalidate
       update_status
+      return true
+    end
+    ZSU::Settings.open_settings('khu_dao') if key == ZSU::Settings.key_mo_cai_dat
+    if key == VK_SHIFT && @parent && Sketchup.active_model.selection.empty?
+      @target_data = build_target_all_corners(@parent)
+      view.invalidate
     end
   end
+  def onKeyUp(key, repeat, flags, view)
+    if key == VK_SHIFT && Sketchup.active_model.selection.empty?
+      @target_data = @parent && @hover_edge ? build_target_manual : []
+      view.invalidate
+      update_status
+    end
+  end
+
   def onReturn(view)
     return unless @mode == "Tự động" && @target_data && @target_data.any?
     return if @duong_kinh_dao == 0
@@ -343,7 +347,7 @@ class ZSU::Khudao
       v1 = (e1.vertices - [v]).first.position.transform(tr)
       v2 = (e2.vertices - [v]).first.position.transform(tr)
       dir = v_pos.vector_to(v1).normalize + v_pos.vector_to(v2).normalize
-      offset = @duong_kinh_dao - 0.1.mm
+      offset = @duong_kinh_dao - @khu_sau_them - 0.1.mm
     else
       f = f.is_a?(Array) ? f.max_by(&:area) : f
       se = f.edges.find { |ed| ed != e && ed.vertices.include?(v) }
@@ -367,7 +371,7 @@ class ZSU::Khudao
         v1 = (e1.vertices - [vtx]).first.position.transform(tr)
         v2 = (e2.vertices - [vtx]).first.position.transform(tr)
         d = vtx_pos.vector_to(v1).normalize + vtx_pos.vector_to(v2).normalize
-        vx = vtx_pos.offset(d, @duong_kinh_dao - 0.1.mm)
+        vx = vtx_pos.offset(d, @duong_kinh_dao - @khu_sau_them - 0.1.mm)
         center_data << [Geom.linear_combination(0.5, vtx_pos, 0.5, vx), vtx_pos]
       end
     else
@@ -526,8 +530,13 @@ class ZSU::Khudao
         ZSU.select_tool(nil)
       else
         if @mode == "Thủ công"
-          @parent = @parent.make_unique
-          ZSU::Group.fix_scale(@parent)
+          if @parent && @parent.valid?
+            @parent = @parent.make_unique if @parent.respond_to?(:make_unique)
+            ZSU::Group.fix_scale(@parent)
+          else
+            UI.beep
+            return
+          end
         end
         ZSU.start(false)
         @target_data.each do |group|

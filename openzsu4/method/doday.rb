@@ -7,6 +7,7 @@ class ZSU::Doday
   end
   def init_var
     @sua_loi_tiep_giap = read("sua_loi_tiep_giap", true)
+    @che_do = read("che_do", "tuyet_doi")
     @ti_le_nen_do = read("ti_le_nen_do", ZSU::View.grid_scale, true).to_f
     @bo_dem_nen = read("bo_dem_nen", 1, true).to_i
     @do_day = read("do_day", 17.5).to_f.mm
@@ -27,9 +28,23 @@ class ZSU::Doday
         do_day: [:mm, "Độ dày"],
       }
     )
+    mode_keys = ["tuyet_doi", "tuong_doi"]
+    init_mode_buttons(
+      ["Tuyệt đối", "Tương đối"],
+      active_proc: -> { mode_keys.index(@che_do) || 0 },
+      on_click: -> (i) {
+        @che_do = mode_keys[i]
+        write("che_do", @che_do)
+        @button_config[:modified] = true if @button_config
+        update_status
+        Sketchup.active_model.active_view.invalidate
+      }
+    )
   end
   def load_preset(preset_settings)
     @sua_loi_tiep_giap = preset_settings["sua_loi_tiep_giap"]
+    che_do = preset_settings["che_do"]
+    @che_do = che_do if che_do
     @do_day = preset_settings["do_day"].to_f.mm if preset_settings["do_day"]
   end
   def activate
@@ -60,10 +75,13 @@ class ZSU::Doday
     true
   end
   def onKeyDown(key, repeat, flags, view)
-    ZSU::Settings.open_settings('doday') if key == 192
+    if key == ZSU::Settings.key_chuyen_che_do
+      find_boards_by_thickness
+      return true
+    end
+    ZSU::Settings.open_settings('doday') if key == ZSU::Settings.key_mo_cai_dat
   end
   def onKeyUp(key, repeat, flags, view)
-    find_boards_by_thickness if key == 9
   end
   def onUserText(text, view)
     num = text.to_l.to_mm.to_f
@@ -105,14 +123,19 @@ class ZSU::Doday
   def draw(view)
     draw_preset_buttons(view)
     draw_setting_buttons(view)
+    draw_mode_buttons(view)
     return unless @hover_board && @hover_board.valid?
     thickness = ZSU::Board.calc_thickness(@hover_board)
     return unless thickness
-    needs_change = (thickness - @do_day).abs > 0.01.mm
+    needs_change = if @che_do == "tuyet_doi"
+                     (thickness - @do_day).abs > 0.01.mm
+                   else
+                     @do_day.abs > 0.01.mm
+                   end
     ZSU::View.highlight_board(@hover_board) if needs_change
   end
   def update_status
-    ZSU.status("Nhấn chuột vào ván để đổi độ dày. Nhấn Tab để tìm ván theo độ dày.")
+    ZSU.status("Click ván để sửa độ dày. Click nút trên màn hình để chuyển Tuyệt đối/Tương đối. Nhấn Tab để tìm ván theo độ dày.")
     ZSU.vcb("Độ dày", Sketchup.format_length(@do_day))
   end
   private
@@ -129,15 +152,18 @@ class ZSU::Doday
     ZSU.select(boards)
   end
   def open_settings
-    prompts = ["Sửa tiếp giáp:", "Độ dày mới:"]
-    defaults = [@sua_loi_tiep_giap ? "Có" : "Không", format("%.2f", @do_day.to_mm)]
-    lists = ["Có|Không", ""]
+    prompts = ["Sửa tiếp giáp:", "Kiểu thay đổi:", "Độ dày mới:"]
+    mode_display = (@che_do == "tuong_doi") ? "Tương đối" : "Tuyệt đối"
+    defaults = [@sua_loi_tiep_giap ? "Có" : "Không", mode_display, format("%.2f", @do_day.to_mm)]
+    lists = ["Có|Không", "Tuyệt đối|Tương đối", ""]
     values = UI.inputbox(prompts, defaults, lists, "Sửa độ dày")
     return unless values
     @sua_loi_tiep_giap = values[0] == "Có"
-    @do_day = values[1].to_f.mm
+    @che_do = (values[1] == "Tuyệt đối") ? "tuyet_doi" : "tuong_doi"
+    @do_day = values[2].to_f.mm
     write("sua_loi_tiep_giap", @sua_loi_tiep_giap)
-    write("do_day", values[1].to_f)
+    write("che_do", @che_do)
+    write("do_day", values[2].to_f)
     values
   end
   def process_boards(boards, select_after: false)
@@ -175,8 +201,9 @@ class ZSU::Doday
       ZSU.start
       boards.each do |b|
         old_thickness = ZSU::Board.calc_thickness(b)
-        next unless old_thickness && value < old_thickness
-        delta = value - old_thickness
+        next unless old_thickness
+        delta = (@che_do == "tuyet_doi") ? (value - old_thickness) : value
+        next unless delta < -0.001.mm
         others = boards - [b]
         contact_faces = find_contacting_faces(b, others, faces_cache)
         push_faces(contact_faces, delta)
@@ -189,14 +216,18 @@ class ZSU::Doday
     ZSU.commit
     ZSU.start
     boards.each do |b|
+      old_thickness = ZSU::Board.calc_thickness(b)
+      next unless old_thickness
+      delta = (@che_do == "tuyet_doi") ? (value - old_thickness) : value
+      next if delta.abs < 0.001.mm
       if cnc_push[b]
-        old_thickness = ZSU::Board.calc_thickness(b)
-        if old_thickness
-          delta = value - old_thickness
-          cnc_push[b].pushpull(delta * @ty_le_day + @sai_so_nen + @bu_sai_nen) unless delta.abs < 0.001.mm
-        end
+        cnc_push[b].pushpull(delta * @ty_le_day + @sai_so_nen + @bu_sai_nen)
       else
-        ZSU::Board.change_thickness(b, value, bb)
+        if @che_do == "tuyet_doi"
+          ZSU::Board.change_thickness(b, value, bb)
+        else
+          ZSU::Board.add_thickness(b, value)
+        end
       end
       ZSU::ABF.fix_marking(b)
     end

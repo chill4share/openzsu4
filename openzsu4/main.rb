@@ -4,7 +4,7 @@ module ZSU
 
   TOL       = 0.001 unless defined?(ZSU::TOL)
   AREA_TOL  = 0.01 unless defined?(ZSU::AREA_TOL)
-  VERSION   = defined?(OpenZSU::VERSION) ? OpenZSU::VERSION : "4.2.8"
+  VERSION   = defined?(OpenZSU::VERSION) ? OpenZSU::VERSION : "4.2.9"
 
   module Core
     def self.dpi_scale; 2.0; end        
@@ -59,6 +59,8 @@ require_relative 'method.rb'
 
 module ZSU
   unless file_loaded?(__FILE__)
+    menu = UI.menu("Plugins").add_submenu("OpenZSU")
+    tools_menu = menu.add_submenu("Công cụ")
 
     tb = UI::Toolbar.new("OpenZSU - Woodworking Pro")
     icon_path = File.join(File.dirname(__FILE__), "icons")
@@ -100,6 +102,7 @@ module ZSU
       cmd.tooltip = title
       cmd.status_bar_text = "OpenZSU: #{title}"
       tb.add_item(cmd)
+      tools_menu.add_item(cmd)
     end
 
     tb.add_separator
@@ -121,7 +124,7 @@ module ZSU
 
     tb.restore
 
-    menu = UI.menu("Plugins").add_submenu("OpenZSU")
+    menu.add_separator
     menu.add_item("Bảng Điều Khiển Cài Đặt") { 
       (defined?(ZSU::Settings) ? ZSU::Settings.open_settings("cai_dat") : ZSU::Caidat.open_settings("cai_dat")) rescue nil 
     }

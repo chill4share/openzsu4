@@ -14,6 +14,14 @@ module ZSU::Settings
   @setting_dialog = nil
   SETTINGS_VERSION = 4
 
+  def self.key_mo_cai_dat
+    192
+  end
+
+  def self.key_chuyen_che_do
+    9
+  end
+
   def self.ensure_file
     if !File.directory?(SETTINGS_DIR) && File.directory?(OLD_SETTINGS_DIR)
       begin

@@ -46,8 +46,9 @@ class ZSU::Bogoc
     view.invalidate
     update_status
   end
+
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('bo_goc')
     elsif key == 16 && @parent && @cached_valid_edges && !@cached_valid_edges.empty?
       cache_selection_data
@@ -56,6 +57,7 @@ class ZSU::Bogoc
       view.invalidate
     end
   end
+
   def onKeyUp(key, repeat, flags, view)
     if key == 16
       @shift_all = false
@@ -363,7 +365,7 @@ class ZSU::Bogoc
       created_edges.all? { |e| f.edges.include?(e) } && f.vertices.include?(vertex)
     end
     if target_face
-      target_face.pushpull(-@hover_edge.length * @ty_le_cung + @do_lech_cung + @can_chinh_cung)
+      target_face.pushpull(-@hover_edge.length)
     else
       edges = ZSU.grep_ents(@parent, :edge)
       target_edges = edges.select do |e|
@@ -373,7 +375,7 @@ class ZSU::Bogoc
       faces = ZSU.grep_ents(@parent, :face)
       target_face = faces.find { |f| (f.edges - (created_edges + target_edges)).empty? }
       return unless target_face
-      target_face.pushpull(-@hover_edge.length * @ty_le_cung + @do_lech_cung, true)
+      target_face.pushpull(-@hover_edge.length, true)
       ZSU.grep_ents(@parent, :edge).each do |e|
         if org_positions.include?(e.start.position) ||
            org_positions.include?(e.end.position)
@@ -539,9 +541,9 @@ class ZSU::Bogoc
         angles[1] += 2 * Math::PI if angles[1] < angles[0]
         angle_diff = angles[1] - angles[0]
         so_canh = @do_min_tu_dong ? tinh_so_canh(@ban_kinh, angle_diff) : @so_canh
-        build_arc_points(center, angles[0], angles[1], @ban_kinh * @ty_le_cung + @sai_so_cung, x_axis, y_axis, so_canh)
+        build_arc_points(center, angles[0], angles[1], @ban_kinh, x_axis, y_axis, so_canh)
       when "loi"
-        e1x, e2x = dirs.map { |d| center.offset(d, @ban_kinh * @ty_le_cung + @sai_so_cung) }
+        e1x, e2x = dirs.map { |d| center.offset(d, @ban_kinh) }
         bisector = Geom::Vector3d.linear_combination(0.5, dirs[0], 0.5, dirs[1]).normalize
         perp1 = normal.cross(dirs[0]).normalize
         perp1 = perp1.reverse if (perp1 % bisector) < 0
@@ -564,8 +566,8 @@ class ZSU::Bogoc
         [pts_order[0]] + arc_pts + [pts_order[1]]
       when "cheo"
         angles.map do |a|
-          center.offset(x_axis, Math.cos(a) * (@ban_kinh * @ty_le_cung + @sai_so_cung))
-                .offset(y_axis, Math.sin(a) * (@ban_kinh * @ty_le_cung + @sai_so_cung))
+          center.offset(x_axis, Math.cos(a) * @ban_kinh)
+                .offset(y_axis, Math.sin(a) * @ban_kinh)
         end
     end
   end

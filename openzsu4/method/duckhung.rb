@@ -230,8 +230,9 @@ class ZSU::Duckhung
     return unless @cached_face && @cached_parent && @cached_thickness
     execute
   end
+
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('duc_khung')
       init_var
       view.invalidate
@@ -243,6 +244,7 @@ class ZSU::Duckhung
       end
     end
   end
+
   def onKeyUp(key, repeat, flags, view)
     if key == VK_SHIFT
       if @shift_mode
@@ -441,7 +443,7 @@ class ZSU::Duckhung
           @cached_hem_pts_local = ZSU::Offset.offset_pts(verts, f.normal, -hem_offset)
         else
           @cached_hem_pts_local = ZSU::Offset.offset_pts(
-            @cached_inner_pts, f.normal.reverse, @chieu_rong_hem_kinh
+            @cached_inner_pts, f.normal, @chieu_rong_hem_kinh
           )
         end
       else
@@ -531,7 +533,7 @@ class ZSU::Duckhung
         hem_pts_local = ZSU::Offset.offset_pts(verts, target_face.normal, -hem_offset)
       else
         hem_pts_local = ZSU::Offset.offset_pts(
-          inner_pts, target_face.normal.reverse, @chieu_rong_hem_kinh
+          inner_pts, target_face.normal, @chieu_rong_hem_kinh
         )
       end
     end
@@ -635,7 +637,7 @@ class ZSU::Duckhung
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
         hem_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
-        hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh)
+        hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal, @chieu_rong_hem_kinh)
       end
       hem_segments = (@bo_goc_kinh || !@bo_goc_trong) ? inner_segments : nil
       build_hem(ents, inner_pts, hem_pts, hem_segments) if hem_pts && hem_pts.length >= 3
@@ -647,7 +649,7 @@ class ZSU::Duckhung
         glass_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         glass_pts = ZSU::Offset.offset_pts(
-          inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh
+          inner_pts, frame_face.normal, @chieu_rong_hem_kinh
         )
       end
       glass_pts = inner_pts unless glass_pts && glass_pts.length >= 3
@@ -702,7 +704,7 @@ class ZSU::Duckhung
         glass_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
         glass_pts = ZSU::Offset.offset_pts(
-          inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh
+          inner_pts, frame_face.normal, @chieu_rong_hem_kinh
         )
       end
       glass_pts = inner_pts unless glass_pts && glass_pts.length >= 3
@@ -745,7 +747,7 @@ class ZSU::Duckhung
         hem_offset = @chieu_rong_khung - @chieu_rong_hem_kinh
         hem_pts = ZSU::Offset.offset_face_pts(frame_face, -hem_offset)
       else
-        hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal.reverse, @chieu_rong_hem_kinh)
+        hem_pts = ZSU::Offset.offset_pts(inner_pts, frame_face.normal, @chieu_rong_hem_kinh)
       end
       hem_segments = (@bo_goc_kinh || !@bo_goc_trong) ? inner_segments : nil
       build_hem(ents, inner_pts, hem_pts, hem_segments) if hem_pts && hem_pts.length >= 3

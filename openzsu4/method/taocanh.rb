@@ -263,8 +263,13 @@ class ZSU::Taocanh
     end
     handle_dimension_input(text, view)
   end
+
   def onKeyDown(key, rpt, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_chuyen_che_do
+      handle_tab(view)
+      return true
+    end
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('tao_canh')
       return true
     end
@@ -316,11 +321,9 @@ class ZSU::Taocanh
       update_status
       view.invalidate
       return true
-    elsif key == 9
-      handle_tab(view)
-      return true
     end
   end
+
   def getExtents
     bb = Geom::BoundingBox.new
     case @state
@@ -704,7 +707,7 @@ class ZSU::Taocanh
       g = ents.add_group
       f = g.entities.add_face(pts)
       next unless f
-      board = ZSU::Board.make(f, ents, 0, @chia_do_sau * @ty_le_canh)
+      board = ZSU::Board.make(f, ents, 0, @chia_do_sau)
       tr = g.transformation
       board.transform!(tr) unless tr.identity?
       boards << board
@@ -1348,7 +1351,7 @@ class ZSU::Taocanh
     ents = ZSU::Model.active_entities
     ZSU.start
     new_boards = []
-    do_day = (@dao_chieu ? @do_day : -@do_day) * @ty_le_canh + @sai_so_canh + @bu_sai_canh
+    do_day = @dao_chieu ? @do_day : -@do_day
     cells.each do |cell_pts|
       g = ents.add_group
       f = g.entities.add_face(cell_pts)

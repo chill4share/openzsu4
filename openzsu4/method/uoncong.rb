@@ -33,12 +33,17 @@ class ZSU::Uoncong
   end
 
   def onKeyDown(key, repeat, flags, view)
+    if key == ZSU::Settings.key_chuyen_che_do
+      cycle_mode
+      view.invalidate if view
+      return true
+    end
     @flatten = true if key == VK_CONTROL
     if key == VK_ALT
       @skip_bending = true
       view.invalidate if view
     end
-    ZSU::Settings.open_settings('uon_cong') if key == 192
+    ZSU::Settings.open_settings('uon_cong') if key == ZSU::Settings.key_mo_cai_dat
     if key == 27 && @mode == MODE_MANUAL && @selected_edges.any?
       @selected_edges = []
       view.invalidate if view
@@ -50,10 +55,6 @@ class ZSU::Uoncong
     @flatten = false if key == VK_CONTROL
     if key == ALT_MODIFIER_KEY
       @skip_bending = false
-      view.invalidate if view
-    end
-    if key == 9
-      cycle_mode
       view.invalidate if view
     end
   end
@@ -612,7 +613,7 @@ class ZSU::Uoncong
       face = chain_ents.grep(Sketchup::Face).first
       if face
         push_distance = face.normal.dot(ref_vector) > 0 ? @chieu_day_xuong : -@chieu_day_xuong
-        face.pushpull(push_distance * @ty_le_uon + @do_lech_uon + @can_bang_uon)
+        face.pushpull(push_distance)
       end
 
       chain_group.transformation = trans
@@ -738,7 +739,7 @@ class ZSU::Uoncong
     face = ZSU::Board.get_cnc_faces(khe_ents.grep(Sketchup::Face)).first
     if face
       push_distance = face.normal.dot(ref_vector) > 0 ? @chieu_day_xuong : -@chieu_day_xuong
-      face.pushpull(push_distance * @ty_le_uon)
+      face.pushpull(push_distance)
     end
 
     khe_group.transformation = trans
@@ -844,7 +845,7 @@ class ZSU::Uoncong
           to_mid = face.bounds.center.vector_to(mid_bone)
           push_distance = face.normal.dot(to_mid) > 0 ?
             reference_vector.length : -reference_vector.length
-          face.pushpull(push_distance * @ty_le_uon)
+          face.pushpull(push_distance)
         end
         group.transformation = trans
         result << group
@@ -935,7 +936,7 @@ class ZSU::Uoncong
       face = rect_group.entities.grep(Sketchup::Face).first
       if face
         move_dir = face.normal.reverse
-        face.pushpull(@do_day_lop_lot * @ty_le_uon)
+        face.pushpull(@do_day_lop_lot)
         move_dir.length = @do_day_lop_lot + 10.mm
         rect_group.transform!(Geom::Transformation.translation(move_dir))
       end
@@ -1593,7 +1594,7 @@ class ZSU::Uoncong
       face = ZSU::Face.merge_coplanar(faces).first[0] rescue faces.first
 
       push_dir = face.normal.dot(Z_AXIS) >= 0 ? 1 : -1
-      face.pushpull(@do_day_van * @ty_le_uon * push_dir)
+      face.pushpull(@do_day_van * push_dir)
       unwrapped_group.material = @picked_group_material if @picked_group_material
     end
     ZSU.commit

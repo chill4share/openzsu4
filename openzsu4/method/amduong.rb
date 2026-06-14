@@ -194,8 +194,11 @@ class ZSU::Amduong
         faces_before = ZSU.grep_ents(preview, :face).to_a
         ZSU::Solid.trim(preview, trim_clone)
         trim_clone.erase! if trim_clone.valid?
-        (ZSU.grep_ents(preview, :face).to_a - faces_before).each do |f|
-          f.edges.select { |e| e.faces.size == 1 }.each(&:erase!)
+        faces_after = ZSU.grep_ents(preview, :face).to_a - faces_before
+        faces_after.each do |f|
+          next unless f.valid?
+          stray_edges = f.edges.select { |e| e.valid? && e.faces.size == 1 }
+          stray_edges.each { |e| e.erase! if e.valid? }
         end
       end
 
@@ -210,20 +213,21 @@ class ZSU::Amduong
   end
 
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_chuyen_che_do && @state == 1
+      @reverse = !@reverse
+      @button_config[:modified] = true if @button_config
+      update_intersect
+      view.invalidate
+      update_status
+      return true
+    end
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings("am_duong")
     end
   end
 
   def onKeyUp(key, repeat, flags, view)
     return if @sb_selected_item
-    if key == 9 && @state == 1
-      @reverse = !@reverse
-      @button_config[:modified] = true if @button_config
-      update_intersect
-      view.invalidate
-      update_status
-    end
   end
 
   def onMouseMove(flags, x, y, view)
@@ -443,13 +447,25 @@ class ZSU::Amduong
   end
 
   def apply_vector
-    @tasks.each do |b1, b2, int, face_b1, face_b2, v3|
-      tr = int.transformation
+    @tasks.each do |task|
+      next unless task.is_a?(Array) && task.length == 6
+      b1, b2, int, face_b1, face_b2, v3 = task
+
+      next unless b1 && b1.valid? && b2 && b2.valid?
+      next unless int && int.valid?
+      next unless face_b1 && face_b1.valid? && face_b2 && face_b2.valid?
+      next unless v3 && v3.respond_to?(:reverse)
+
+      tr = int.transformation rescue nil
+      next unless tr
+
       direction = @reverse ? v3.reverse : v3
 
       [[b1, face_b1], [b2, face_b2]].each do |board, face|
+        next unless board.valid? && face.valid?
         board_dir = (board == b1) ? direction : direction.reverse
         group_idx = @board_groups.index { |(grp, _)| grp.include?(board) }
+        next unless group_idx
         color = @group_colors[group_idx]
         face_pts = extract_face_world_pts(face, tr)
         add_section_face(board, face_pts, board_dir, v3, color)
@@ -640,8 +656,8 @@ class ZSU::Amduong
 
     ZSU.start
     if !@tiet_dien_vuong
-      ents.add_circle(c1, normal, radius * @ty_le_giao)
-      ents.add_circle(c2, normal, radius * @ty_le_giao)
+      ents.add_circle(c1, normal, radius)
+      ents.add_circle(c2, normal, radius)
     else
       ad_len = ad_vec.length.to_f
       ad_scale = radius / ad_len
@@ -744,7 +760,14 @@ class ZSU::Amduong
     all_inside_faces = []
     all_boards = []
 
-    @tasks.each do |b1, b2, int1, int2, v3|
+    @tasks.each do |task|
+      next unless task.is_a?(Array) && task.length == 5
+      b1, b2, int1, int2, v3 = task
+
+      next unless b1 && b1.valid? && b2 && b2.valid?
+      next unless int1 && int1.valid? && int2 && int2.valid?
+      next unless v3 && v3.respond_to?(:reverse)
+
       ZSU.start
       edges_before_list = []
       trim_and_cleanup(b1, int1, edges_before_list)
@@ -752,6 +775,7 @@ class ZSU::Amduong
       ZSU.commit
 
       [b1, b2].each_with_index do |board, i|
+        next unless board.valid?
         inside_faces = collect_inside_faces(board, edges_before_list[i], v3)
         inside_faces.select!(&:valid?)
 
@@ -776,10 +800,13 @@ class ZSU::Amduong
   end
 
   def collect_all_inside_faces(body, edges_before)
+    return [] unless body && body.valid?
     new_edges = ZSU.grep_ents(body, :edge).to_a - edges_before
-    largest_faces = ZSU::Board.get_cnc_faces(body)
+    new_edges.select!(&:valid?)
+    largest_faces = ZSU::Board.get_cnc_faces(body) || []
+    largest_faces.select!(&:valid?)
     ZSU.grep_ents(body, :face).select { |f|
-      (f.edges - new_edges).empty? && !largest_faces.include?(f)
+      f.valid? && (f.edges - new_edges).empty? && !largest_faces.include?(f)
     }
   end
 
@@ -804,21 +831,21 @@ class ZSU::Amduong
       ZSU.start
       larger_two.each do |f|
         next unless f.valid?
-        f.pushpull(-@ho_canh_them * @ty_le_giao + @sai_so_giao + @can_bang_giao)
+        f.pushpull(-@ho_canh_them)
       end
       ZSU.commit
     end
 
     if @khau_sau_them != 0
       ZSU.start
-      smallest.pushpull(-@khau_sau_them / 2.0 * @ty_le_giao + @sai_so_giao) if smallest.valid?
+      smallest.pushpull(-@khau_sau_them / 2.0) if smallest.valid?
       ZSU.commit
     end
   end
 
   def apply_overcut(task_inside_faces)
-    shared_edges = task_inside_faces.flat_map(&:edges).select { |edge|
-      (edge.faces & task_inside_faces).size >= 2
+    shared_edges = task_inside_faces.flat_map { |f| f.valid? ? f.edges : [] }.select { |edge|
+      edge.valid? && (edge.faces & task_inside_faces).size >= 2
     }.uniq
     return unless shared_edges.any?
 
@@ -829,7 +856,7 @@ class ZSU::Amduong
     shared_edges.each do |edge|
       next unless edge.valid? && edge.faces.size == 2
       parent = edge.parent.instances.first rescue nil
-      next unless parent
+      next unless parent && parent.valid?
       overcut.process_single(edge, parent,
                              diameter: @duong_kinh_dao, position: "nho", shape: @tiet_dien_vuong)
     end
@@ -880,25 +907,37 @@ class ZSU::Amduong
     edges_before_list << ZSU.grep_ents(body, :edge).to_a
     faces_before = ZSU.grep_ents(body, :face).to_a
     ZSU::Solid.trim(body, inter)
-    (ZSU.grep_ents(body, :face).to_a - faces_before).each do |f|
-      f.edges.select { |e| e.faces.size == 1 }.each(&:erase!)
+    faces_after = ZSU.grep_ents(body, :face).to_a - faces_before
+    faces_after.each do |f|
+      next unless f.valid?
+      stray_edges = f.edges.select { |e| e.valid? && e.faces.size == 1 }
+      stray_edges.each { |e| e.erase! if e.valid? }
     end
     inter.erase! if inter.valid?
   end
 
   def collect_inside_faces(body, edges_before, v3)
+    return [] unless body && body.valid?
+    return [] unless v3 && v3.respond_to?(:transform)
     tr = body.transformation
     new_edges = ZSU.grep_ents(body, :edge).to_a - edges_before
-    new_edge_faces = ZSU.grep_ents(body, :face).select { |f| (f.edges - new_edges).empty? }
+    new_edges.select!(&:valid?)
+    new_edge_faces = ZSU.grep_ents(body, :face).select { |f| f.valid? && (f.edges - new_edges).empty? }
 
-    v3_local = v3.transform(tr.inverse)
-    bottom_face = new_edge_faces.find { |f| f.normal.parallel?(v3_local) }
-    return new_edge_faces unless bottom_face
+    begin
+      v3_local = v3.transform(tr.inverse)
+    rescue
+      return []
+    end
+    bottom_face = new_edge_faces.find { |f| f.valid? && f.normal.parallel?(v3_local) }
+    return new_edge_faces unless bottom_face && bottom_face.valid?
 
-    largest_faces = ZSU::Board.get_cnc_faces(body)
-    neighbor_faces = bottom_face.edges.flat_map(&:faces).uniq - [bottom_face] - largest_faces
+    largest_faces = ZSU::Board.get_cnc_faces(body) || []
+    largest_faces.select!(&:valid?)
+    neighbor_faces = bottom_face.edges.flat_map { |e| e.valid? ? e.faces : [] }.uniq - [bottom_face] - largest_faces
+    neighbor_faces.select!(&:valid?)
 
-    [bottom_face] + neighbor_faces
+    ([bottom_face] + neighbor_faces).select(&:valid?)
   end
 
   def moving(board, distance, vector)

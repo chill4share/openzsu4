@@ -248,11 +248,14 @@ class ZSU::Banle
   end
   def onKeyDown(key, rpt, flags, view)
     return if @sb_selected_item
-    if key == ALT_MODIFIER_KEY
+    if key == ZSU::Settings.key_chuyen_che_do && danh_ban_le?
+      cycle_hinge_type(view)
+      return true
+    elsif key == ALT_MODIFIER_KEY
       @alt_mode = true
       update_alt_parent(@mouse_x || 0, @mouse_y || 0, view)
       return true
-    elsif key == 192
+    elsif key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings("ban_le")
       return true
     end
@@ -263,9 +266,6 @@ class ZSU::Banle
       @alt_mode = false
       @alt_parent = nil
       view.invalidate
-      return true
-    elsif key == 9 && danh_ban_le?
-      cycle_hinge_type(view)
       return true
     end
   end

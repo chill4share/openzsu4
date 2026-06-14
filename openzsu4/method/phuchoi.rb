@@ -74,7 +74,7 @@ class ZSU::Phuchoi
     ZSU.vcb("Xóa cạnh ngắn hơn", Sketchup.format_length(@do_dai_toi_thieu))
   end
   def onKeyDown(key, repeat, flags, view)
-    if key == 192
+    if key == ZSU::Settings.key_mo_cai_dat
       ZSU::Settings.open_settings('phuc_hoi')
       return true
     end
@@ -359,7 +359,7 @@ class ZSU::Phuchoi
     end
     local_normal = data[:normal].transform(tr.inverse)
     new_face.reverse! if new_face.normal.dot(local_normal) < 0
-    new_face.pushpull(-data[:thickness] * @ty_le_phuc + @sai_so_hoi + @can_chinh_phuc)
+    new_face.pushpull(-data[:thickness])
     ZSU::Purge.fix_all(board)
     ZSU.commit
     ZSU::Board.reset_axes(board) if @sua_truc_toa_do

@@ -142,8 +142,9 @@ class ZSU::Baoranh
     save_active_preset
     view.invalidate
   end
+
   def onKeyDown(key, repeat, flags, view)
-    ZSU::Settings.open_settings('bao_ranh') if key == 192
+    ZSU::Settings.open_settings('bao_ranh') if key == ZSU::Settings.key_mo_cai_dat
     if key == VK_SHIFT && !@shift_mode && @face
       @shift_mode = true
       target = select_nearest_edge(@face)
@@ -151,6 +152,7 @@ class ZSU::Baoranh
       view.invalidate
     end
   end
+
   def onKeyUp(key, repeat, flags, view)
     return if @sb_selected_item
     if key == VK_SHIFT && @shift_mode && @face
@@ -206,7 +208,7 @@ class ZSU::Baoranh
       test_point_local = test_point.transform(tr.inverse)
       inward_vec = inward_vec.reverse unless face.classify_point(test_point_local) <= 4
     end
-    effective_cach_mep = @cach_mep * @ty_le_ranh + extra_offset + @do_lech_do + @can_chinh_ranh
+    effective_cach_mep = @cach_mep + extra_offset
     line1_p1 = v1_pos.offset(inward_vec, effective_cach_mep)
     line1_p2 = v2_pos.offset(inward_vec, effective_cach_mep)
     if @rect_limit
@@ -228,8 +230,8 @@ class ZSU::Baoranh
     v1x = v1x.offset(dir_v2, ct)
     v2x = v2x.offset(dir_v1, cs)
     return [v1x, v2x] if @chieu_rong == 0
-    line2_p1 = v1_pos.offset(inward_vec, effective_cach_mep + @chieu_rong * @ty_le_ranh)
-    line2_p2 = v2_pos.offset(inward_vec, effective_cach_mep + @chieu_rong * @ty_le_ranh)
+    line2_p1 = v1_pos.offset(inward_vec, effective_cach_mep + @chieu_rong)
+    line2_p2 = v2_pos.offset(inward_vec, effective_cach_mep + @chieu_rong)
     if @rect_limit
       v1y = find_nearest_intersection_rect(line2_p1, line2_p2, @rect_limit, v1_pos)
       v2y = find_nearest_intersection_rect(line2_p1, line2_p2, @rect_limit, v2_pos)
